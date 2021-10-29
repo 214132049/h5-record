@@ -1,0 +1,51 @@
+{
+  "compilerOptions": {
+    "allowJs": false,
+    "baseUrl": ".",
+    "declaration": true,
+    "downlevelIteration": true,
+    "inlineSources": true,
+    "importHelpers": true,
+    "outDir": "dist",
+    "sourceMap": true,
+    "useDefineForClassFields": false,
+    "moduleResolution": "node",
+    "module": "esnext",
+    "target": "ES5",
+    "strict": true,
+    "noUnusedLocals": true,
+    "experimentalDecorators": true,
+    "noEmitHelpers": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "noUnusedParameters": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "pretty": true,
+    "removeComments": false,
+    "lib": [
+      "ESNext",
+      "DOM",
+      "WebWorker"
+    ],
+    "types": [
+      "localforage"
+    ],
+    "rootDir": "./src",
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "plugins": [
+    {
+      "name": "typescript-tslint-plugin",
+      "alwaysShowRuleFailuresAsWarnings": false,
+      "ignoreDefinitionFiles": true,
+      "configFile": "./tslint.json",
+      "suppressWhileTypeErrorsPresent": false,
+      "mockTypeScriptVersion": false
+    }
+  ]
+}

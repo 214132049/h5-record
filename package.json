@@ -1,0 +1,70 @@
+{
+  "name": "h5-record",
+  "version": "1.0.0",
+  "description": "h5 record sdk",
+  "scripts": {
+    "build:esm": "tsc",
+    "build": "rollup --config && npm run build:esm"
+  },
+  "files": [
+    "build/",
+    "dist/"
+  ],
+  "author": "",
+  "license": "ISC",
+  "entry": "src/record.ts",
+  "iffe": "build/record.min.js",
+  "main": "dist/record.js",
+  "module": "dist/record.js",
+  "browserslist": [
+    "> 0.25%",
+    "not dead"
+  ],
+  "lint-staged": {
+    "*.js": [
+      "prettier --write"
+    ],
+    "*.ts?(x)": [
+      "eslint",
+      "prettier --parser=typescript --write"
+    ]
+  },
+  "devDependencies": {
+    "@babel/core": "^7.15.8",
+    "@babel/plugin-external-helpers": "^7.14.5",
+    "@babel/plugin-transform-runtime": "^7.15.8",
+    "@babel/preset-env": "^7.15.8",
+    "@babel/preset-typescript": "^7.15.0",
+    "@babel/runtime": "^7.15.4",
+    "@babel/runtime-corejs3": "^7.15.4",
+    "@rollup/plugin-babel": "^5.3.0",
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-node-resolve": "^13.0.6",
+    "@rollup/plugin-typescript": "^8.3.0",
+    "@types/base-64": "^1.0.0",
+    "@types/crypto-js": "^4.0.2",
+    "@types/pako": "^1.0.2",
+    "rollup": "^2.58.3",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-web-worker-loader": "^1.6.1",
+    "tslib": "^2.3.1",
+    "typescript": "^4.4.4"
+  },
+  "peerDependencies": {
+    "base-64": "^1.0.0",
+    "core-js": "3",
+    "crypto-js": "^4.1.1",
+    "localforage": "^1.10.0",
+    "pako": "^2.0.4",
+    "regenerator-runtime": "^0.13.9"
+  },
+  "dependencies": {
+    "base-64": "^1.0.0",
+    "core-js": "3",
+    "crypto-js": "^4.1.1",
+    "localforage": "^1.10.0",
+    "pako": "^2.0.4",
+    "regenerator-runtime": "^0.13.9"
+  }
+}
