@@ -137,9 +137,9 @@ const worker = {
   /**
    * key提交失败保存到本地
    */
-  saveKeys(data: string[]) {
+  async saveKeys(data: string[]) {
     if (data.length > 0) {
-      this.addLocalData(KEYS_KEY, data, true);
+      await this.addLocalData(KEYS_KEY, data, true);
     }
     // fix: 在提交请求执行后再清空 修复在提交keys的时候worker已关闭
     this.ossKeys = [];
@@ -153,14 +153,15 @@ const worker = {
    * @param savaPrv 是否保留之前的数据
    * @private
    */
-  addLocalData(key: string, value: any[], savaPrv = false) {
+  async addLocalData(key: string, value: any[], savaPrv = false) {
     try {
+      if (value.length === 0) return
       if (!savaPrv) {
         return localforage.setItem(key, value);
       }
-      localforage.getItem(key).then((oldVal: any) => {
-        return localforage.setItem(key, ((oldVal || []) as Array<OssParam|string|unknown>).concat(value))
-      });
+      const oldVal = await localforage.getItem(key)
+      const newVal = ((oldVal || []) as Array<OssParam|string|unknown>).concat(value)
+      await localforage.setItem(key, newVal)
     } catch (e) {
       this.addLocalData(key, value, savaPrv);
     }
