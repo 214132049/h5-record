@@ -1,5 +1,6 @@
 export interface OssBaseParams {
   uploadHost: string,
+  ossPath: string
   data: {
     [key: string]: any
   }
@@ -30,14 +31,16 @@ export interface WorkerCallback {
 }
 
 export interface RecordOptions {
-  // 获取oss上传参数接口地址
-  url: string,
-  // oss bizType
-  bizType: string,
-  // oss上传参数获取 自定义方法
-  customGet: () => Promise<OssBaseParams|null>
   // oss kes提交方法
   submitKeyFn: (data: string[]) => Promise<{result: number}>,
+  // 获取oss上传参数接口地址
+  url?: string,
+  // oss bizType
+  bizType?: string,
+  // oss 文件路径
+  ossPath?: string
+  // oss上传参数获取 自定义方法
+  customGet?: (() => Promise<OssBaseParams|null>) | undefined
   // 是否提交本地储存的录制数据
   isSubmitLocal?: boolean,
   // 错误报告

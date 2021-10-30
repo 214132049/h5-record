@@ -16,11 +16,9 @@ function getUUID() {
   });
 }
 
-const oss_path = 'ymmfile/insure-service/spb/t/'
-
 localforage.config({
-  name: 'ins-record',
-  storeName: 'recordData',
+  name: '$$record',
+  storeName: '_record_data_',
   description: '储存录屏数据'
 });
 
@@ -59,7 +57,7 @@ const worker = {
     const submitEvents = lastEvents.splice(0, submitThrottle);
     const ossFile = deflate(JSON.stringify(submitEvents), {level: 6}).toString();
     const fileName = getUUID()
-    const key = oss_path + fileName
+    const key = this.ossBaseParams.ossPath + fileName
     const params = Object.assign({key, file: ossFile});
     this.ossKeys.push(fileName)
     this.ossParams.push(params)
@@ -92,12 +90,8 @@ const worker = {
     return fetch(uploadHost, {
       method: 'POST',
       body: formData
-    }).then(res => {
-      if (res.status !== 200) {
-        throw new Error('')
-      }
-      return false
-    }).catch(() => params);
+    }).then(res => res.status !== 200 ? Promise.reject('') : false)
+      .catch(() => params);
   },
 
   /**
@@ -132,7 +126,7 @@ const worker = {
   submitKeys(data?: string[]) {
     const body = data || [{
       fileName: this.ossKeys,
-      path: oss_path,
+      path: this.ossBaseParams.ossPath,
     }]
     self.postMessage({
       action: 'submitKey',

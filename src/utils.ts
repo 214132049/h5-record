@@ -29,7 +29,7 @@ function getPolicy() {
  * @param customGet 自定义获取参数方法
  * @return
  */
-export async function getUploadParams(fetchUrl?: string, biz_type?: string, customGet?: () => Promise<OssBaseParams|null>): Promise<OssBaseParams|null> {
+export async function getUploadParams(fetchUrl?: string, biz_type?: string, customGet?: () => Promise<OssBaseParams | null>): Promise<OssBaseParams | null> {
   let data: any
   if (typeof customGet === 'function') {
     data = await customGet()
@@ -50,7 +50,10 @@ export async function getUploadParams(fetchUrl?: string, biz_type?: string, cust
   }
   if (!data) return null;
   const policy = getPolicy();
-  const {privateOssTokenDTO: {stsAccessKey, stsAccessId, stsToken, timestamp, bucketName, endpoint}} = data;
+  const {
+    privateOssTokenDTO: {stsAccessKey, stsAccessId, stsToken, timestamp, bucketName, endpoint},
+    uploadPrepareInfoDTOs
+  } = data;
   const uploadHost = endpoint.replace(/\/\//, `//${bucketName}.`);
   const bytes = HmacSHA1(policy, stsAccessKey);
   const signature = encBase64.stringify(bytes);
@@ -63,6 +66,7 @@ export async function getUploadParams(fetchUrl?: string, biz_type?: string, cust
       OSSAccessKeyId: stsAccessId,
       'x-oss-security-token': stsToken,
     },
-    uploadHost
+    uploadHost,
+    ossPath: uploadPrepareInfoDTOs[0]?.bizTypePath
   } as OssBaseParams
 }

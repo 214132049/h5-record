@@ -22,11 +22,13 @@ export default class Record {
   // 录制实例
   private static _instance: Record
   // 获取oss上传参数接口地址
-  private _fetchUrl!: string
+  private _fetchUrl: string | undefined
   // oss bizType
-  private _bizType!: string
+  private _bizType: string | undefined
+  // oss 文件路径
+  private _ossPath: string | undefined
   // oss上传参数获取 自定义方法
-  private _customGet!: () => Promise<OssBaseParams|null>
+  private _customGet: (() => Promise<OssBaseParams | null>) | undefined
   // 录制参数
   private _recordOptions: any
   // oss kes提交方法
@@ -34,7 +36,7 @@ export default class Record {
   // 停止录制
   private _stopRecord!: null | (() => void)
   // worker实例
-  private _worker!: Worker
+  private _worker!: Worker | null
   // 录制快照
   private _snapshot!: null | Snapshot
   // 错误捕捉方法
@@ -52,17 +54,19 @@ export default class Record {
 
   _init(options: RecordOptions) {
     const {
-      url,
-      bizType,
+      url = '',
+      bizType = '',
       customGet,
       isSubmitLocal = true,
       submitKeyFn,
+      ossPath = '',
       reportError = noop,
       ...recordOptions
     } = options;
     Record._checkOptions(options)
     this._stopRecord = null;
     this._fetchUrl = url;
+    this._ossPath = ossPath;
     this._bizType = bizType;
     this._customGet = customGet;
     this._snapshot = null
@@ -79,7 +83,7 @@ export default class Record {
     };
     if (isSubmitLocal) {
       this._initWorker()
-      this._worker.postMessage({
+      this._worker?.postMessage({
         action: 'submitLocal'
       });
     }
@@ -101,7 +105,7 @@ export default class Record {
         const keyPromise = payload.map(v => this._submitKeyServer(v))
         Promise.all(keyPromise).then(res => {
           const failParams = res.filter(Boolean)
-          this._worker.postMessage({
+          this._worker?.postMessage({
             action: 'saveKeys',
             payload: failParams
           });
@@ -138,11 +142,12 @@ export default class Record {
     this._worker.onmessage = this._workerMessageHandler.bind(this);
     getUploadParams(this._fetchUrl, this._bizType, this._customGet).then((res: OssBaseParams | null) => {
       if (!res) return
-      this._worker.postMessage({
+      if (this._ossPath) {
+        res.ossPath = this._ossPath
+      }
+      this._worker?.postMessage({
         action: 'setOssBaseParams',
-        payload: {
-          ossBaseParams: res
-        }
+        payload: res
       });
     })
   }
@@ -151,7 +156,8 @@ export default class Record {
    * 关闭web worker
    */
   private _closeWorker() {
-    this._worker.terminate()
+    this._worker?.terminate()
+    this._worker = null
   }
 
   /**
@@ -161,7 +167,7 @@ export default class Record {
   _suspendWorker(time: number = 5) {
     clearTimeout(closeWorkerTimer);
     closeWorkerTimer = setTimeout(() => {
-      this._worker.postMessage({
+      this._worker?.postMessage({
         action: 'getSnapshot'
       });
     }, time * 1000);
@@ -173,7 +179,7 @@ export default class Record {
   private _resumeWorker() {
     this._initWorker();
     if (this._snapshot) {
-      this._worker.postMessage({
+      this._worker?.postMessage({
         action: 'resumeSnapshot',
         payload: this._snapshot
       });
@@ -204,7 +210,7 @@ export default class Record {
   private _collectEvent(event: any, isCheckout?: boolean) {
     this._suspendWorker();
     this._resumeWorker();
-    this._worker.postMessage({
+    this._worker?.postMessage({
       action: 'collectEvent',
       payload: {
         event,
@@ -221,7 +227,8 @@ export default class Record {
   private _submitKeyServer(data: string[]) {
     const fn = this._submitKeyFn
     if (typeof fn !== 'function') {
-      throw new Error('请实现上传oss key方法')
+      console.error('请实现上传oss key方法')
+      return Promise.resolve(data)
     }
     return fn(data)
       .then(({result}) => result !== 1 ? Promise.reject('提交失败') : false)
@@ -234,7 +241,7 @@ export default class Record {
    */
   startRecord() {
     this._initWorker();
-    this._worker.postMessage({
+    this._worker?.postMessage({
       action: 'startRecord'
     });
     this._startRecord()
@@ -254,7 +261,7 @@ export default class Record {
   resumeRecord() {
     this._initWorker()
     if (this._snapshot) {
-      this._worker.postMessage({
+      this._worker?.postMessage({
         action: 'resumeSnapshot',
         payload: this._snapshot
       });
@@ -290,7 +297,7 @@ export default class Record {
     if (typeof submitCallback === "function") {
       this._submitCallback = submitCallback
     }
-    this._worker.postMessage({
+    this._worker?.postMessage({
       action: 'submitRecord'
     });
   }

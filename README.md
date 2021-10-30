@@ -21,6 +21,14 @@ record.startRecord()
 
 ### 配置项:
 
+`submitKeyFn`
+
+Type: (data: string[]) => Promise<{result: number}>  
+Required: true  
+Default: ''
+
+录制文件储存在oss上，需设置此函数提交oss文件key
+
 `url`:
 
 Type: string  
@@ -51,29 +59,21 @@ Default: ''
 
 通过此配置可以自定义获取oss上传参数方法
 
-`version`
+`ossPath`
 
 Type: string  
-Required: true  
+Required: false  
 Default: ''
 
-h5项目发的版本，回放录制时通过此版本获取用户当时页面资源
+指定文件在OSS上的路径, 不指定默认使用OSS参数中指定的路径
 
 `isSubmitLocal`
 
 Type: Boolean  
-Required: true  
+Required: false  
 Default: ''
 
 是否在实例化H5Record时，提交本地储存的录制数据
-
-`submitKeyFn`
-
-Type: (data: string[]) => Promise<{result: number}>  
-Required: true  
-Default: ''
-
-录制文件储存在oss上，需设置此函数提交oss文件key
 
 `reportError`
 
