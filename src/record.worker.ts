@@ -1,5 +1,5 @@
 import localforage from "localforage";
-import { FormData } from 'formdata-polyfill/esm.min.js'
+import 'formdata-polyfill'
 // @ts-ignore
 import {deflate} from "pako/lib/deflate.js";
 import {OssBaseParams, OssParam, RecordEvent, Snapshot, WorkerFnKey} from "./types";

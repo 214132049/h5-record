@@ -74,12 +74,12 @@ export default class Record {
     this._submitKeyFn = submitKeyFn;
     this._reportError = reportError;
     this._recordOptions = {
-      ...recordOptions,
       blockClass: /(^rr-block$)|(^__vconsole$)|(^eruda-container$)/,
       blockSelector: '#__vconsole',
       inlineStylesheet: false,
-      emit: this._collectEvent.bind(this),
       recordLog: false,
+      ...recordOptions,
+      emit: this._collectEvent.bind(this),
     };
     if (isSubmitLocal) {
       this._initWorker()
