@@ -1,7 +1,6 @@
 import typescript from "@rollup/plugin-typescript";
 import nodeResolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
-import babel from "@rollup/plugin-babel";
 import {terser} from "rollup-plugin-terser";
 // @ts-ignore
 import workerLoader from 'rollup-plugin-web-worker-loader';
@@ -26,10 +25,6 @@ export default {
       preserveSource: true
     }),
     typescript(),
-    babel({
-      babelHelpers: 'runtime',
-      exclude: 'node_modules/**'
-    }),
     terser()
   ]
 }

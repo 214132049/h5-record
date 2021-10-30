@@ -16,28 +16,7 @@
   "iffe": "build/record.min.js",
   "main": "dist/record.js",
   "module": "dist/record.js",
-  "browserslist": [
-    "> 10%",
-    "not dead"
-  ],
-  "lint-staged": {
-    "*.js": [
-      "prettier --write"
-    ],
-    "*.ts?(x)": [
-      "eslint",
-      "prettier --parser=typescript --write"
-    ]
-  },
   "devDependencies": {
-    "@babel/core": "^7.15.8",
-    "@babel/plugin-external-helpers": "^7.14.5",
-    "@babel/plugin-transform-runtime": "^7.15.8",
-    "@babel/preset-env": "^7.15.8",
-    "@babel/preset-typescript": "^7.15.0",
-    "@babel/runtime": "^7.15.4",
-    "@babel/runtime-corejs3": "^7.15.4",
-    "@rollup/plugin-babel": "^5.3.0",
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.0.6",
     "@rollup/plugin-typescript": "^8.3.0",
@@ -53,20 +32,16 @@
   },
   "peerDependencies": {
     "base-64": "^1.0.0",
-    "core-js": "3",
     "crypto-js": "^4.1.1",
     "formdata-polyfill": "^4.0.10",
     "localforage": "^1.10.0",
-    "pako": "^2.0.4",
-    "regenerator-runtime": "^0.13.9"
+    "pako": "^2.0.4"
   },
   "dependencies": {
     "base-64": "^1.0.0",
-    "core-js": "3",
     "crypto-js": "^4.1.1",
     "formdata-polyfill": "^4.0.10",
     "localforage": "^1.10.0",
-    "pako": "^2.0.4",
-    "regenerator-runtime": "^0.13.9"
+    "pako": "^2.0.4"
   }
 }

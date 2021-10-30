@@ -1,4 +1,3 @@
-import "regenerator-runtime/runtime.js";
 // @ts-ignore
 import RecordWorker from 'web-worker:./record.worker.ts'
 // @ts-ignore
@@ -276,9 +275,8 @@ export default class Record {
    * 获取全量快照
    */
   takeFullSnapshot() {
-    if (this._stopRecord) {
-      record.takeFullSnapshot(true);
-    }
+    if (this._stopRecord) return
+    record.takeFullSnapshot(true)
   }
 
   /**
@@ -286,6 +284,7 @@ export default class Record {
    * @param submitCallback 提交执行完后的回调
    */
   submitRecord(submitCallback = noop) {
+    if (!this._stopRecord) return
     this._closeRecord()
     clearTimeout(closeWorkerTimer)
     if (typeof submitCallback === "function") {
