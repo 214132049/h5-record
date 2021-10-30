@@ -29,12 +29,6 @@ export interface WorkerCallback {
   reportError: (err: Error | MessageEvent) => void
 }
 
-export enum Env {
-  dev = 'dev',
-  beta = 'beta',
-  production = 'production'
-}
-
 export interface RecordOptions {
   // 获取oss上传参数接口地址
   url: string,

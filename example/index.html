@@ -9,20 +9,35 @@
   <script src="../build/record.min.js"></script>
 </head>
 <body>
+<div>
+  <button onclick="start()">开始录制</button>
+  <button onclick="end()">结束录制</button>
+  <button onclick="submit()">提交录制</button>
+</div>
 <input type="text">
-<button onclick="handleClick()">点击</button>
+<button onclick="handleClick()">填充</button>
 <script>
-  function handleClick() {
-    const txt = document.createElement('span');
-    txt.innerText = '插入的内容'
-    document.body.appendChild(txt)
-  }
   var h5Record = new H5Record({
     version: '1.0.0',
     bizType: 'insure-service',
     url: 'https://qa.ymm56.com/ymm-file-app/fileUpload/preUpload'
   })
-  h5Record.startRecord()
+
+  function start() {
+    h5Record.startRecord()
+  }
+  function end() {
+    h5Record.closeRecord()
+  }
+  function submit() {
+    h5Record.submitRecord()
+  }
+  function handleClick() {
+    const txt = document.createElement('span');
+    txt.innerText = '插入的内容'
+    document.body.appendChild(txt)
+  }
+
 </script>
 </body>
 </html>

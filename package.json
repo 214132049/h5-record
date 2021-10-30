@@ -17,7 +17,7 @@
   "main": "dist/record.js",
   "module": "dist/record.js",
   "browserslist": [
-    "> 0.25%",
+    "> 10%",
     "not dead"
   ],
   "lint-staged": {
@@ -55,6 +55,7 @@
     "base-64": "^1.0.0",
     "core-js": "3",
     "crypto-js": "^4.1.1",
+    "formdata-polyfill": "^4.0.10",
     "localforage": "^1.10.0",
     "pako": "^2.0.4",
     "regenerator-runtime": "^0.13.9"
@@ -63,6 +64,7 @@
     "base-64": "^1.0.0",
     "core-js": "3",
     "crypto-js": "^4.1.1",
+    "formdata-polyfill": "^4.0.10",
     "localforage": "^1.10.0",
     "pako": "^2.0.4",
     "regenerator-runtime": "^0.13.9"

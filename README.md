@@ -1,6 +1,6 @@
 # H5-Record
 
-基于 [rrweb@0.9.14](https://github.com/rrweb-io/rrweb) 开发的H5页面的录制SDK
+基于 [rrweb@0.9.14](https://github.com/rrweb-io/rrweb) 和WebWorker开发的H5页面的录制SDK
 
 ### 使用方式：
 
@@ -83,8 +83,39 @@ Default: () => {}
 
 处理worker异常
 
+> 其他设置参考rrweb@0.9.14配置项
+
 ### 方法:
 
-`startRecord: (data: {recordSourceType?: number}) => void`
-开启录制
+`startRecord`  
+@return void
+
+调用此方法开启录制
+
+`closeRecord`  
+@return void
+
+调用此方法关闭录制, 关闭WebWorker
+
+`suspendRecord`  
+@return void  
+
+录制过程中，某个页面不需要录制，可以调用此方法保留当前录制数据，暂停录制
+
+`resumeRecord`  
+@return void
+
+调用此方法取回暂停前的录制数据，继续之前的录制
+
+`takeFullSnapshot`  
+@return void
+
+录制过程中，调用此方法重新获取当前页面结构快照
+
+`submitRecord`  
+@params submitCallback: () => {}  
+@return void
+
+提交录制数据，并关闭录制。可提供一个回调函数，在数据提交完成后调用
+
 

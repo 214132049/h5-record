@@ -1,9 +1,8 @@
 import localforage from "localforage";
+import { FormData } from 'formdata-polyfill/esm.min.js'
 // @ts-ignore
 import {deflate} from "pako/lib/deflate.js";
 import {OssBaseParams, OssParam, RecordEvent, Snapshot, WorkerFnKey} from "./types";
-
-self.importScripts('https://cos.56qq.com/fis/202107141539392822f4130824c6c555.js');
 
 /**
  * 生成uuid
@@ -249,8 +248,8 @@ const worker = {
   submitRecord() {
     this.recording = false
     this.getOssData()
-    this.submitKeys()
     this.submitOssParams(true)
+    this.submitKeys()
   },
 
   /**

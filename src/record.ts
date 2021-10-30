@@ -116,8 +116,7 @@ export default class Record {
         this._closeWorker()
         try {
           this._submitCallback()
-          this._submitCallback = () => {
-          }
+          this._submitCallback = noop
         } catch (e) {
         }
       },
@@ -137,7 +136,7 @@ export default class Record {
     this._worker.onmessageerror = (e: MessageEvent) => {
       typeof this._reportError === 'function' && this._reportError(e)
     };
-    this._worker.onmessage = this._workerMessageHandler;
+    this._worker.onmessage = this._workerMessageHandler.bind(this);
     getUploadParams(this._fetchUrl, this._bizType, this._customGet).then((res: OssBaseParams | null) => {
       if (!res) return
       this._worker.postMessage({
@@ -239,11 +238,15 @@ export default class Record {
     this._worker.postMessage({
       action: 'startRecord'
     });
-    if (this._stopRecord) {
-      record.takeFullSnapshot(true);
-    } else {
-      this._startRecord()
-    }
+    this._startRecord()
+  }
+
+  /**
+   * 关闭录制
+   */
+  closeRecord() {
+    this._closeRecord()
+    this._closeWorker();
   }
 
   /**
@@ -270,25 +273,26 @@ export default class Record {
   }
 
   /**
-   * 关闭录制
+   * 获取全量快照
    */
-  closeRecord() {
-    this._closeRecord()
-    this._closeWorker();
+  takeFullSnapshot() {
+    if (this._stopRecord) {
+      record.takeFullSnapshot(true);
+    }
   }
 
   /**
    * 用户本次投保结束 提交数据
-   * @param data 投保结束时需要的其他内容 主要是orderNo
    * @param submitCallback 提交执行完后的回调
    */
-  submitRecord(data: { orderNo: string }, submitCallback = noop) {
+  submitRecord(submitCallback = noop) {
     this._closeRecord()
     clearTimeout(closeWorkerTimer)
-    this._submitCallback = submitCallback
+    if (typeof submitCallback === "function") {
+      this._submitCallback = submitCallback
+    }
     this._worker.postMessage({
-      action: 'submitRecord',
-      payload: data
+      action: 'submitRecord'
     });
   }
 }

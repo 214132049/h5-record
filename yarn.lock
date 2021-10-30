@@ -1295,12 +1295,26 @@ fastq@^1.6.0:
   dependencies:
     reusify "^1.0.4"
 
+fetch-blob@^3.1.2:
+  version "3.1.2"
+  resolved "https://registry.nlark.com/fetch-blob/download/fetch-blob-3.1.2.tgz?cache=0&other_urls=https%3A%2F%2Fregistry.nlark.com%2Ffetch-blob%2Fdownload%2Ffetch-blob-3.1.2.tgz#6bc438675f3851ecea51758ac91f6a1cd1bacabd"
+  integrity sha1-a8Q4Z184UezqUXWKyR9qHNG6yr0=
+  dependencies:
+    web-streams-polyfill "^3.0.3"
+
 fill-range@^7.0.1:
   version "7.0.1"
   resolved "https://registry.npm.taobao.org/fill-range/download/fill-range-7.0.1.tgz#1919a6a7c75fe38b2c7c77e5198535da9acdda40"
   integrity sha1-GRmmp8df44ssfHflGYU12prN2kA=
   dependencies:
     to-regex-range "^5.0.1"
+
+formdata-polyfill@^4.0.10:
+  version "4.0.10"
+  resolved "https://registry.npmmirror.com/formdata-polyfill/download/formdata-polyfill-4.0.10.tgz#24807c31c9d402e002ab3d8c720144ceb8848423"
+  integrity sha1-JIB8McnUAuACqz2McgFEzriEhCM=
+  dependencies:
+    fetch-blob "^3.1.2"
 
 fs-extra@^8.1.0:
   version "8.1.0"
@@ -1870,6 +1884,11 @@ universalify@^0.1.0:
   version "0.1.2"
   resolved "https://registry.npm.taobao.org/universalify/download/universalify-0.1.2.tgz?cache=0&sync_timestamp=1603180004159&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Funiversalify%2Fdownload%2Funiversalify-0.1.2.tgz#b646f69be3942dabcecc9d6639c80dc105efaa66"
   integrity sha1-tkb2m+OULavOzJ1mOcgNwQXvqmY=
+
+web-streams-polyfill@^3.0.3:
+  version "3.1.1"
+  resolved "https://registry.nlark.com/web-streams-polyfill/download/web-streams-polyfill-3.1.1.tgz#1516f2d4ea8f1bdbfed15eb65cb2df87098c8364"
+  integrity sha1-FRby1OqPG9v+0V62XLLfhwmMg2Q=
 
 wrappy@1:
   version "1.0.2"
