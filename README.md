@@ -27,7 +27,13 @@ Type: (data: string[]) => Promise<{result: number}>
 Required: true  
 Default: ''
 
-录制文件储存在oss上，需设置此函数提交oss文件key
+录制文件储存在oss上，需设置此函数提交oss文件key  
+
+submitKeyFn方法参数及要求：  
+@params: data: string[]  oss文件key  
+@return: object 上传成功后需返回包含属性result=1的对象
+
+若方法不符合要求，将视为上传失败，oss key数组将保留到本地
 
 `url`:
 
