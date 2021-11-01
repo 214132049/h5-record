@@ -3,19 +3,18 @@
   "version": "1.0.0",
   "description": "h5 record sdk",
   "scripts": {
-    "build:esm": "tsc",
-    "build": "rollup --config && npm run build:esm"
+    "build": "rollup --config && npm run build:esm",
+    "build:esm": "tsc"
   },
   "files": [
-    "build/",
-    "dist/"
+    "build",
+    "types"
   ],
-  "author": "",
+  "types": "types",
+  "author": "wenli.li",
   "license": "ISC",
   "entry": "src/index.ts",
-  "iffe": "build/record.min.js",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
+  "main": "build/record.min.js",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.0.6",

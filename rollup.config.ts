@@ -11,8 +11,8 @@ export default {
   input: pkg.entry,
   output: {
     name: 'H5Record',
-    file: pkg.iffe,
-    format: 'iife',
+    file: pkg.main,
+    format: 'umd',
     sourcemap: true
   },
   plugins: [
@@ -32,8 +32,7 @@ export default {
     }),
     copy({
       targets: [
-        {src: 'replay/*', dest: 'build'},
-        {src: 'replay/*', dest: 'dist'},
+        {src: 'replay/*', dest: 'build'}
       ]
     })
   ]
