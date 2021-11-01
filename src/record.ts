@@ -1,4 +1,3 @@
-// @ts-ignore
 import RecordWorker from 'web-worker:./record.worker.ts'
 // @ts-ignore
 import record from './rrweb-record'

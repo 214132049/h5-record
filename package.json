@@ -12,10 +12,10 @@
   ],
   "author": "",
   "license": "ISC",
-  "entry": "src/record.ts",
+  "entry": "src/index.ts",
   "iffe": "build/record.min.js",
-  "main": "dist/record.js",
-  "module": "dist/record.js",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.0.6",

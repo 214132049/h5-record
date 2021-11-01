@@ -1,5 +1,5 @@
-import localforage from "localforage";
 import 'formdata-polyfill'
+import localforage from "localforage";
 // @ts-ignore
 import {deflate} from "pako/lib/deflate.js";
 import {OssBaseParams, OssParam, RecordEvent, Snapshot, WorkerFnKey} from "./types";

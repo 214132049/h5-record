@@ -23,7 +23,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "pretty": true,
-    "removeComments": false,
+    "removeComments": true,
     "lib": [
       "ESNext",
       "DOM",
@@ -36,7 +36,8 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "worker.d.ts"
   ],
   "plugins": [
     {
