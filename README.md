@@ -1,6 +1,6 @@
 # H5-Record
 
-基于 [rrweb@0.9.14](https://github.com/rrweb-io/rrweb) 和WebWorker开发的H5页面的录制SDK
+基于 [rrweb@0.9.14](https://github.com/rrweb-io/rrweb) 和WebWorker开发的H5页面录制SDK
 
 ### 使用方式：
 
@@ -11,7 +11,7 @@ const record = H5Record(options)
 record.startRecord()
 ```
 ```html
-<script src=".../build/record.min.js"></script>
+<script src="../record.min.js"></script>
 
 <script>
   const record = window.H5Record(options)
@@ -23,19 +23,21 @@ record.startRecord()
 
 `submitKeyFn`
 
-Type: (data: string[]) => Promise<{result: number}>  
+Type: (data: KeysParam) => Promise<{result: number}>  
 Required: true  
 Default: ''
 
 录制文件储存在oss上，需设置此函数提交oss文件key  
 
 submitKeyFn方法参数及要求：  
-@params: data: string[]  oss文件key  
+@params: data: KeysParam[]  oss文件key对象  
+@params: data.filename: KeysParam[]  oss文件key数组  
+@params: data.path: KeysParam[]  oss文件key对应的osspath, 与`ossPath`对应  
 @return: object 上传成功后需返回包含属性result=1的对象
 
 若方法不符合要求，将视为上传失败，oss key数组将保留到本地
 
-`url`:
+`preUploadUrl`:
 
 Type: string  
 Required: false  
@@ -55,13 +57,13 @@ Default: ''
 
 申请的oss bucketName
 
-`customGet`
+`preUploadGet`
 
 Type: () => Promise<OssBaseParams|null>  
 Required: false  
 Default: ''
 
-> note: 设置此配置会忽略url、bizType配置
+> note: 设置此配置会忽略preUploadUrl、bizType配置
 
 通过此配置可以自定义获取oss上传参数方法
 
@@ -71,7 +73,15 @@ Type: string
 Required: false  
 Default: ''
 
-指定文件在OSS上的路径, 不指定默认使用OSS参数中指定的路径
+`mergeToLast`
+
+Type: boolean  
+Required: false  
+Default: false
+
+ossPath相同时，本次录制数据是否与本地oss key最后一个合并
+
+> 受浏览器同源限制，同源页面下此属性才有效
 
 `isSubmitLocal`
 

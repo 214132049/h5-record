@@ -3,7 +3,7 @@ import RecordWorker from 'web-worker:./record.worker.ts'
 // @ts-ignore
 import record from './rrweb-record'
 import {getUploadParams, noop} from "./utils";
-import {OssBaseParams, RecordOptions, Snapshot, WorkerCallback} from "./types";
+import {KeysParam, OssBaseParams, RecordOptions, Snapshot, WorkerCallback} from "./types";
 
 /**
  * 创建worker
@@ -22,17 +22,19 @@ export default class Record {
   // 录制实例
   private static _instance: Record
   // 获取oss上传参数接口地址
-  private _fetchUrl: string | undefined
+  private _preUploadUrl: string | undefined
   // oss bizType
   private _bizType: string | undefined
   // oss 文件路径
   private _ossPath: string | undefined
+  // 是否与本地oss key最后一个合并
+  private _mergeToLast: boolean | undefined
   // oss上传参数获取 自定义方法
-  private _customGet: (() => Promise<OssBaseParams | null>) | undefined
+  private _preUploadGet: (() => Promise<OssBaseParams | null>) | undefined
   // 录制参数
   private _recordOptions: any
   // oss kes提交方法
-  private _submitKeyFn!: (data: string[]) => Promise<{ result: number }>
+  private _submitKeyFn: ((data: KeysParam) => Promise<{ result: number; }>) | undefined
   // 停止录制
   private _stopRecord!: null | (() => void)
   // worker实例
@@ -54,21 +56,23 @@ export default class Record {
 
   _init(options: RecordOptions) {
     const {
-      url = '',
+      preUploadUrl = '',
       bizType = '',
-      customGet,
+      preUploadGet,
       isSubmitLocal = true,
       submitKeyFn,
       ossPath = '',
+      mergeToLast = false,
       reportError = noop,
       ...recordOptions
     } = options;
     Record._checkOptions(options)
     this._stopRecord = null;
-    this._fetchUrl = url;
+    this._preUploadUrl = preUploadUrl;
     this._ossPath = ossPath;
     this._bizType = bizType;
-    this._customGet = customGet;
+    this._mergeToLast = Boolean(mergeToLast);
+    this._preUploadGet = preUploadGet;
     this._snapshot = null
     this._submitCallback = noop
     this._submitKeyFn = submitKeyFn;
@@ -96,12 +100,15 @@ export default class Record {
     if (!options.url) {
       throw new Error('请提供获取oss上传参数接口地址')
     }
+    if (typeof options.submitKeyFn !== 'function') {
+      console.error('没有实现上传oss key方法, 数据将保存到本地!!!')
+    }
   }
 
   private _workerMessageHandler(e: MessageEvent) {
     const {action, payload} = e.data;
     const fnMap: WorkerCallback = {
-      submitKey: (payload: any[]) => {
+      submitKey: (payload: KeysParam[]) => {
         const keyPromise = payload.map(v => this._submitKeyServer(v))
         Promise.all(keyPromise).then(res => {
           const failParams = res.filter(Boolean)
@@ -140,7 +147,7 @@ export default class Record {
       typeof this._reportError === 'function' && this._reportError(e)
     };
     this._worker.onmessage = this._workerMessageHandler.bind(this);
-    getUploadParams(this._fetchUrl, this._bizType, this._customGet).then((res: OssBaseParams | null) => {
+    getUploadParams(this._preUploadUrl, this._bizType, this._preUploadGet).then((res: OssBaseParams | null) => {
       if (!res) return
       if (this._ossPath) {
         res.ossPath = this._ossPath
@@ -224,10 +231,9 @@ export default class Record {
    * @param {string[]} data oss文件keys
    * @return Promise<Boolean|T>
    */
-  private _submitKeyServer(data: string[]) {
+  private _submitKeyServer(data: KeysParam) {
     const fn = this._submitKeyFn
     if (typeof fn !== 'function') {
-      console.error('请实现上传oss key方法')
       return Promise.resolve(data)
     }
     return fn(data)
@@ -298,7 +304,10 @@ export default class Record {
       this._submitCallback = submitCallback
     }
     this._worker?.postMessage({
-      action: 'submitRecord'
+      action: 'submitRecord',
+      payload: {
+        mergeToLast: this._mergeToLast
+      }
     });
   }
 }

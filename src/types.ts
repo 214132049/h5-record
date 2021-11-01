@@ -15,6 +15,11 @@ export interface OssParam {
   file: string
 }
 
+export interface KeysParam {
+  path: string,
+  fileName: string[]
+}
+
 export interface Snapshot {
   events: Array<RecordEvent[]>,
   ossParams: OssParam[],
@@ -32,15 +37,17 @@ export interface WorkerCallback {
 
 export interface RecordOptions {
   // oss kes提交方法
-  submitKeyFn: (data: string[]) => Promise<{result: number}>,
+  submitKeyFn: (data: KeysParam) => Promise<{result: number}>,
   // 获取oss上传参数接口地址
-  url?: string,
+  preUploadUrl?: string,
   // oss bizType
   bizType?: string,
   // oss 文件路径
   ossPath?: string
+  // 是否与本地oss key最后一个合并
+  mergeToLast?: boolean
   // oss上传参数获取 自定义方法
-  customGet?: (() => Promise<OssBaseParams|null>) | undefined
+  preUploadGet?: (() => Promise<OssBaseParams|null>) | undefined
   // 是否提交本地储存的录制数据
   isSubmitLocal?: boolean,
   // 错误报告

@@ -26,13 +26,13 @@ function getPolicy() {
  * 获取上传文件需要的所有参数  使用OSS PostObject方式
  * @param fetchUrl 获取上传参数的url
  * @param biz_type oss bucket
- * @param customGet 自定义获取参数方法
+ * @param preUploadGet 自定义获取参数方法
  * @return
  */
-export async function getUploadParams(fetchUrl?: string, biz_type?: string, customGet?: () => Promise<OssBaseParams | null>): Promise<OssBaseParams | null> {
+export async function getUploadParams(fetchUrl?: string, biz_type?: string, preUploadGet?: () => Promise<OssBaseParams | null>): Promise<OssBaseParams | null> {
   let data: any
-  if (typeof customGet === 'function') {
-    data = await customGet()
+  if (typeof preUploadGet === 'function') {
+    data = await preUploadGet()
   } else if (fetchUrl && biz_type) {
     data = await fetch(fetchUrl, {
       method: 'POST',

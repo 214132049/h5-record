@@ -2,7 +2,7 @@ import 'formdata-polyfill'
 import localforage from "localforage";
 // @ts-ignore
 import {deflate} from "pako/lib/deflate.js";
-import {OssBaseParams, OssParam, RecordEvent, Snapshot, WorkerFnKey} from "./types";
+import {KeysParam, OssBaseParams, OssParam, RecordEvent, Snapshot, WorkerFnKey} from "./types";
 
 /**
  * 生成uuid
@@ -32,8 +32,8 @@ const submitThrottle = 10;
 let debounceTimer = 0;
 
 const LOG_KEY = 'log_events';
-const OSS_KEY = 'oss_events';
-const KEYS_KEY = 'oss_keys';
+const OSS_EVENTS = 'oss_events';
+const OSS_KEYS = 'oss_keys';
 
 const worker = {
   ossBaseParams: {} as OssBaseParams,
@@ -58,7 +58,7 @@ const worker = {
     const ossFile = deflate(JSON.stringify(submitEvents), {level: 6}).toString();
     const fileName = getUUID()
     const key = this.ossBaseParams.ossPath + fileName
-    const params = Object.assign({key, file: ossFile});
+    const params: OssParam = {key, file: ossFile}
     this.ossKeys.push(fileName)
     this.ossParams.push(params)
     if (lastEvents.length > submitThrottle) {
@@ -73,7 +73,7 @@ const worker = {
    * @param params 提交的参数
    * @private
    */
-  submitOss(params = {} as OssParam) {
+  submitOss(params: OssParam) {
     const ossBaseParams = this.ossBaseParams;
     if (!ossBaseParams) {
       return Promise.resolve(params)
@@ -100,7 +100,9 @@ const worker = {
    * @private
    */
   submitOssParams (lastSubmit = false) {
-    const submitPromises = this.ossParams.splice(0, 5).map(v => this.submitOss(v));
+    const submitPromises = this.ossParams.splice(0, 5)
+      .filter(Boolean)
+      .map(v => this.submitOss(v));
     Promise.all(submitPromises).then((res) => {
       const failParams = res.filter(Boolean) as OssParam[];
       if (!lastSubmit) {
@@ -108,7 +110,7 @@ const worker = {
         return;
       }
       // 用户提交订单后  失败的提交全部保存到本地
-      this.addLocalData(OSS_KEY, failParams, true);
+      this.addLocalData(OSS_EVENTS, failParams, true);
       if (this.ossParams.length > 0) {
         // 提交剩下的录制
         this.submitOssParams(lastSubmit);
@@ -121,13 +123,27 @@ const worker = {
   /**
    * 提交文件上传oss文件key
    * @param data 要提交的内容
+   * @param mergeToLast  是否入最后一个合并
    * @private
    */
-  submitKeys(data?: string[]) {
-    const body = data || [{
-      fileName: this.ossKeys,
-      path: this.ossBaseParams.ossPath,
-    }]
+  async submitKeys(data: KeysParam[] | null, mergeToLast?: boolean) {
+    let body = [] as KeysParam[]
+    if (data && data.length > 0) {
+      body = data
+    } else {
+      const path = this.ossBaseParams.ossPath
+      const keysParam = (await this.getLocalOssKeys()) || []
+      let lastFileName = this.ossKeys
+      if (keysParam.length > 0 && mergeToLast) {
+        const lastParam = keysParam.pop()
+        const canMerge = lastParam && lastParam.path === path
+        lastFileName = canMerge ? lastParam.fileName.concat(lastFileName) : lastFileName
+      }
+      body = keysParam.concat({
+        fileName: lastFileName,
+        path,
+      })
+    }
     self.postMessage({
       action: 'submitKey',
       payload: body
@@ -137,9 +153,9 @@ const worker = {
   /**
    * key提交失败保存到本地
    */
-  async saveKeys(data: string[]) {
+  async saveKeys(data: KeysParam[]) {
     if (data.length > 0) {
-      await this.addLocalData(KEYS_KEY, data, true);
+      await this.addLocalData(OSS_KEYS, data, true);
     }
     // fix: 在提交请求执行后再清空 修复在提交keys的时候worker已关闭
     this.ossKeys = [];
@@ -153,7 +169,7 @@ const worker = {
    * @param savaPrv 是否保留之前的数据
    * @private
    */
-  async addLocalData(key: string, value: any[], savaPrv = false) {
+  async addLocalData(key: string, value: Array<KeysParam | OssParam | RecordEvent>, savaPrv = false) {
     try {
       if (value.length === 0) return
       if (!savaPrv) {
@@ -179,28 +195,44 @@ const worker = {
   /**
    * 提交本地保存的事件
    */
-  submitLocal() {
-    const ossKeyPromise = localforage.getItem(OSS_KEY).catch(() => null)
-    const keysKeyPromise = localforage.getItem(KEYS_KEY).catch(() => null)
-    Promise.all([ossKeyPromise, keysKeyPromise]).then((res) => {
-      const ossKey = res[0] as Array<OssParam> | null
-      const keysKey = res[1] as Array<string> | null
-      const noOssKey = !ossKey || ossKey.length === 0
-      const noKeysKey = !keysKey || keysKey.length === 0
-      if (noOssKey && noKeysKey) {
-        this.closeWorker();
-        return;
-      }
-      if (!noOssKey) {
-        localforage.removeItem(OSS_KEY)
-        this.ossParams = this.ossParams.concat(ossKey as Array<OssParam>);
-        this.submitOssParams(true);
-      }
-      if (!noKeysKey) {
-        localforage.removeItem(KEYS_KEY)
-        this.submitKeys(keysKey as Array<string>);
-      }
-    })
+  async submitLocal() {
+    const ossParams = await this.getLocalOssParams()
+    const keysParam = await this.getLocalOssKeys()
+    if (!ossParams && !keysParam) {
+      this.closeWorker();
+      return;
+    }
+    if (ossParams) {
+      this.ossParams = this.ossParams.concat(ossParams);
+      this.submitOssParams(true);
+    }
+    if (keysParam) {
+      await this.submitKeys(keysParam);
+    }
+  },
+
+  /**
+   * 获取本地oss params
+   */
+  async getLocalOssParams () {
+    return this.getLocalData<OssParam>(OSS_EVENTS)
+  },
+
+  /**
+   * 获取本地oss keys
+   */
+  async getLocalOssKeys () {
+    return this.getLocalData<KeysParam>(OSS_KEYS)
+  },
+
+  /**
+   * 获取本地数据
+   */
+  async getLocalData<T> (name: string) {
+    const data = (await localforage.getItem(name).catch(() => null)) as Array<T> | null
+    if (!data || data.length === 0) return null
+    await localforage.removeItem(name)
+    return data
   },
 
   /**
@@ -240,11 +272,11 @@ const worker = {
   /**
    * 用户本次投保结束 提交数据
    */
-  submitRecord() {
+  submitRecord(payload: { mergeToLast: boolean }) {
     this.recording = false
     this.getOssData()
     this.submitOssParams(true)
-    this.submitKeys()
+    this.submitKeys(null, payload.mergeToLast)
   },
 
   /**
