@@ -15,21 +15,26 @@ export interface OssParam {
   file: string
 }
 
-export interface KeysParam {
+export interface OtherSubmitData {
+  [key: string]: any
+}
+
+export type SubmitKeysData = {
   path: string,
   fileName: string[]
-}
+} & OtherSubmitData
 
 export interface Snapshot {
   events: Array<RecordEvent[]>,
   ossParams: OssParam[],
-  ossKeys: string[]
+  ossKeys: string[],
+  otherData: OtherSubmitData
 }
 
-export type WorkerFnKey = 'submitLocal' | 'setOssBaseParams' | 'saveKeys' | 'getSnapshot' | 'resumeSnapshot' | 'collectEvent' | 'startRecord' | 'submitRecord'
+export type WorkerFnKey = 'submitLocal' | 'setOssBaseParams' | 'saveKeys' | 'getSnapshot' | 'resumeSnapshot' | 'collectEvent' | 'startRecord' | 'submitRecord' | 'setOtherData'
 
 export interface WorkerCallback {
-  submitKey: (payload: any[]) => void,
+  submitKey: (payload: SubmitKeysData[]) => void,
   postSnapshot: (payload: Snapshot) => void,
   closeWorker: () => void,
   reportError: (err: Error | MessageEvent) => void
@@ -37,7 +42,7 @@ export interface WorkerCallback {
 
 export interface RecordOptions {
   // oss kes提交方法
-  submitKeyFn: (data: KeysParam) => Promise<{result: number}>,
+  handleSubmit: (data: SubmitKeysData) => Promise<void>,
   // 获取oss上传参数接口地址
   preUploadUrl?: string,
   // oss bizType

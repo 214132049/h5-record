@@ -3,7 +3,14 @@ import RecordWorker from 'web-worker:./record.worker.ts'
 // @ts-ignore
 import record from './rrweb-record'
 import {getUploadParams, noop} from "./utils";
-import {KeysParam, OssBaseParams, RecordOptions, Snapshot, WorkerCallback} from "./types";
+import {
+  OssBaseParams,
+  OtherSubmitData,
+  RecordOptions,
+  Snapshot,
+  SubmitKeysData,
+  WorkerCallback
+} from "./types";
 
 /**
  * 创建worker
@@ -34,7 +41,7 @@ export default class Record {
   // 录制参数
   private _recordOptions: any
   // oss kes提交方法
-  private _submitKeyFn: ((data: KeysParam) => Promise<{ result: number; }>) | undefined
+  private _handleSubmit: ((data: SubmitKeysData) => Promise<void>) | undefined
   // 停止录制
   private _stopRecord!: null | (() => void)
   // worker实例
@@ -44,7 +51,7 @@ export default class Record {
   // 错误捕捉方法
   private _reportError!: (err: MessageEvent | Error) => void
   // oss key提交后的回调
-  private _submitCallback!: () => any
+  private _successCallback!: () => any
 
   constructor(options: RecordOptions) {
     if (Record._instance) {
@@ -60,7 +67,7 @@ export default class Record {
       bizType = '',
       preUploadGet,
       isSubmitLocal = true,
-      submitKeyFn,
+      handleSubmit,
       ossPath = '',
       mergeToLast = false,
       reportError = noop,
@@ -74,8 +81,8 @@ export default class Record {
     this._mergeToLast = Boolean(mergeToLast);
     this._preUploadGet = preUploadGet;
     this._snapshot = null
-    this._submitCallback = noop
-    this._submitKeyFn = submitKeyFn;
+    this._successCallback = noop
+    this._handleSubmit = handleSubmit;
     this._reportError = reportError;
     this._recordOptions = {
       blockClass: /(^rr-block$)|(^__vconsole$)|(^eruda-container$)/,
@@ -97,10 +104,10 @@ export default class Record {
     if (!options.bizType) {
       throw new Error('请提供OSS上传bizType')
     }
-    if (!options.url) {
+    if (!options.preUploadUrl) {
       throw new Error('请提供获取oss上传参数接口地址')
     }
-    if (typeof options.submitKeyFn !== 'function') {
+    if (typeof options.handleSubmit !== 'function') {
       console.error('没有实现上传oss key方法, 数据将保存到本地!!!')
     }
   }
@@ -108,7 +115,7 @@ export default class Record {
   private _workerMessageHandler(e: MessageEvent) {
     const {action, payload} = e.data;
     const fnMap: WorkerCallback = {
-      submitKey: (payload: KeysParam[]) => {
+      submitKey: (payload: SubmitKeysData[]) => {
         const keyPromise = payload.map(v => this._submitKeyServer(v))
         Promise.all(keyPromise).then(res => {
           const failParams = res.filter(Boolean)
@@ -125,8 +132,8 @@ export default class Record {
       closeWorker: () => {
         this._closeWorker()
         try {
-          this._submitCallback()
-          this._submitCallback = noop
+          this._successCallback()
+          this._successCallback = noop
         } catch (e) {
         }
       },
@@ -228,27 +235,25 @@ export default class Record {
 
   /**
    * 提交oss key
-   * @param {string[]} data oss文件keys
-   * @return Promise<Boolean|T>
+   * @param {SubmitKeysData} data
    */
-  private _submitKeyServer(data: KeysParam) {
-    const fn = this._submitKeyFn
+  private _submitKeyServer(data: SubmitKeysData) {
+    const fn = this._handleSubmit
     if (typeof fn !== 'function') {
       return Promise.resolve(data)
     }
-    return fn(data)
-      .then(({result}) => result !== 1 ? Promise.reject('提交失败') : false)
-      .catch(() => data)
+    return fn(data).then(() => false).catch(() => data)
   }
 
   /**
-   * 开始记录投保操作
-   * 新开一个数组 重新生成全量快照
+   * 开始记录操作
+   * @param data 开始录制时 设置额外提交参数
    */
-  startRecord() {
+  startRecord(data: OtherSubmitData) {
     this._initWorker();
     this._worker?.postMessage({
-      action: 'startRecord'
+      action: 'startRecord',
+      payload: data
     });
     this._startRecord()
   }
@@ -285,7 +290,7 @@ export default class Record {
   }
 
   /**
-   * 获取全量快照
+   * 重新生成全量快照
    */
   takeFullSnapshot() {
     if (this._stopRecord) return
@@ -294,19 +299,21 @@ export default class Record {
 
   /**
    * 用户本次投保结束 提交数据
-   * @param submitCallback 提交执行完后的回调
+   * @param data 提交时额外参数
+   * @param successCallback 提交执行完后的回调
    */
-  submitRecord(submitCallback = noop) {
+  submitRecord(data: OtherSubmitData = {}, successCallback = noop) {
     if (!this._stopRecord) return
     this._closeRecord()
     clearTimeout(closeWorkerTimer)
-    if (typeof submitCallback === "function") {
-      this._submitCallback = submitCallback
+    if (typeof successCallback === "function") {
+      this._successCallback = successCallback
     }
     this._worker?.postMessage({
       action: 'submitRecord',
       payload: {
-        mergeToLast: this._mergeToLast
+        mergeToLast: this._mergeToLast,
+        data
       }
     });
   }

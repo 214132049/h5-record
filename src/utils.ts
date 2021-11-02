@@ -70,3 +70,9 @@ export async function getUploadParams(fetchUrl?: string, biz_type?: string, preU
     ossPath: uploadPrepareInfoDTOs[0]?.bizTypePath
   } as OssBaseParams
 }
+
+export const isPlainObject = (obj: any) => Object.prototype.toString.call(obj) === '[object Object]'
+
+export const mergeObj= <T>(source: T, target: T): T => {
+  return isPlainObject(source) && isPlainObject(target) ? {...source, ...target} : {} as T
+}

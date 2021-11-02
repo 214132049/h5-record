@@ -2,7 +2,16 @@ import 'formdata-polyfill'
 import localforage from "localforage";
 // @ts-ignore
 import {deflate} from "pako/lib/deflate.js";
-import {KeysParam, OssBaseParams, OssParam, RecordEvent, Snapshot, WorkerFnKey} from "./types";
+import {
+  OssBaseParams,
+  OssParam,
+  OtherSubmitData,
+  RecordEvent,
+  Snapshot,
+  SubmitKeysData,
+  WorkerFnKey
+} from "./types";
+import {mergeObj} from "./utils";
 
 /**
  * 生成uuid
@@ -38,6 +47,7 @@ const OSS_KEYS = 'oss_keys';
 const worker = {
   ossBaseParams: {} as OssBaseParams,
   recording: false,
+  otherData: {} as OtherSubmitData,
   events: [[]] as Array<RecordEvent[]>,
   ossParams: [] as OssParam[], // 待提交的oss参数
   ossKeys: [] as string[], // 阿里云oss文件key
@@ -126,8 +136,8 @@ const worker = {
    * @param mergeToLast  是否入最后一个合并
    * @private
    */
-  async submitKeys(data: KeysParam[] | null, mergeToLast?: boolean) {
-    let body = [] as KeysParam[]
+  async submitKeys(data: SubmitKeysData[] | null, mergeToLast?: boolean) {
+    let body = [] as SubmitKeysData[]
     if (data && data.length > 0) {
       body = data
     } else {
@@ -140,8 +150,9 @@ const worker = {
         lastFileName = canMerge ? lastParam.fileName.concat(lastFileName) : lastFileName
       }
       body = keysParam.concat({
-        fileName: lastFileName,
         path,
+        fileName: lastFileName,
+        ...this.otherData
       })
     }
     self.postMessage({
@@ -153,7 +164,7 @@ const worker = {
   /**
    * key提交失败保存到本地
    */
-  async saveKeys(data: KeysParam[]) {
+  async saveKeys(data: SubmitKeysData[]) {
     if (data.length > 0) {
       await this.addLocalData(OSS_KEYS, data, true);
     }
@@ -169,14 +180,14 @@ const worker = {
    * @param savaPrv 是否保留之前的数据
    * @private
    */
-  async addLocalData(key: string, value: Array<KeysParam | OssParam | RecordEvent>, savaPrv = false) {
+  async addLocalData(key: string, value: Array<SubmitKeysData | OssParam | RecordEvent>, savaPrv = false) {
     try {
       if (value.length === 0) return
       if (!savaPrv) {
         return localforage.setItem(key, value);
       }
       const oldVal = await localforage.getItem(key)
-      const newVal = ((oldVal || []) as Array<OssParam|string|unknown>).concat(value)
+      const newVal = ((oldVal || []) as Array<OssParam|SubmitKeysData|RecordEvent|unknown>).concat(value)
       await localforage.setItem(key, newVal)
     } catch (e) {
       this.addLocalData(key, value, savaPrv);
@@ -222,7 +233,7 @@ const worker = {
    * 获取本地oss keys
    */
   async getLocalOssKeys () {
-    return this.getLocalData<KeysParam>(OSS_KEYS)
+    return this.getLocalData<SubmitKeysData>(OSS_KEYS)
   },
 
   /**
@@ -264,16 +275,18 @@ const worker = {
    * 开始记录投保操作
    * 新开一个数组 重新生成全量快照
    */
-  startRecord() {
+  startRecord(payload: OtherSubmitData) {
     this.resetRecord()
+    this.setOtherData(payload)
     this.recording = true
   },
 
   /**
    * 用户本次投保结束 提交数据
    */
-  submitRecord(payload: { mergeToLast: boolean }) {
+  submitRecord(payload: { mergeToLast: boolean, data: OtherSubmitData }) {
     this.recording = false
+    this.setOtherData(payload.data)
     this.getOssData()
     this.submitOssParams(true)
     this.submitKeys(null, payload.mergeToLast)
@@ -286,6 +299,7 @@ const worker = {
     this.ossParams = [];
     this.ossKeys = [];
     this.recording = false;
+    this.otherData = {}
   },
 
   /**
@@ -293,6 +307,13 @@ const worker = {
    */
   setOssBaseParams(payload: OssBaseParams) {
     this.ossBaseParams = payload;
+  },
+
+  /**
+   * 初始化
+   */
+  setOtherData(payload: OtherSubmitData) {
+    this.otherData = mergeObj<OtherSubmitData>(this.otherData, payload)
   },
 
   /**
@@ -304,7 +325,8 @@ const worker = {
       payload: {
         events: this.events,
         ossParams: this.ossParams,
-        ossKeys: this.ossKeys
+        ossKeys: this.ossKeys,
+        otherData: this.otherData
       }
     });
   },
@@ -313,11 +335,12 @@ const worker = {
    * 恢复录制 获取暂停前的录制内容
    */
   resumeSnapshot(payload: Snapshot) {
-    const {events, ossParams, ossKeys} = payload;
+    const {events, ossParams, ossKeys, otherData} = payload;
     this.recording = true
     this.events = events
     this.ossParams = ossParams
     this.ossKeys = ossKeys
+    this.otherData = otherData
   },
 
   /**

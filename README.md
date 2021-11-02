@@ -21,21 +21,14 @@ record.startRecord()
 
 ### 配置项:
 
-`submitKeyFn`
+`handleSubmit`
 
-Type: (data: KeysParam) => Promise<{result: number}>  
+Type: (data: SubmitKeysData) => Promise<void>  
 Required: true  
 Default: ''
 
-录制文件储存在oss上，需设置此函数提交oss文件key  
-
-submitKeyFn方法参数及要求：  
-@params: data: KeysParam[]  oss文件key对象  
-@params: data.filename: KeysParam[]  oss文件key数组  
-@params: data.path: KeysParam[]  oss文件key对应的osspath, 与`ossPath`对应  
-@return: object 上传成功后需返回包含属性result=1的对象
-
-若方法不符合要求，将视为上传失败，oss key数组将保留到本地
+提交包含oss key数据、及设置的其他上传参数
+返回fulfilled的promise视为上传成功，否则将视为上传失败，数据将保留到本地
 
 `preUploadUrl`:
 
@@ -103,7 +96,8 @@ Default: () => {}
 
 ### 方法:
 
-`startRecord`  
+`startRecord` 
+@param data: Object  设置提交时所需的额外参数
 @return void
 
 调用此方法开启录制
@@ -129,7 +123,8 @@ Default: () => {}
 录制过程中，调用此方法重新获取当前页面结构快照
 
 `submitRecord`  
-@params submitCallback: () => {}  
+@param data: Object  设置提交时所需的额外参数, 会覆盖`startRecord`设置的同名属性  
+@params successCallback: () => void  
 @return void
 
 提交录制数据，并关闭录制。可提供一个回调函数，在数据提交完成后调用
