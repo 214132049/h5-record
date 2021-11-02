@@ -298,6 +298,16 @@ export default class Record {
   }
 
   /**
+   * 设置上传方法 初始化没有提供oss key上传,可以通过此方法设置
+   */
+  setHandleSubmit(action: (data: SubmitKeysData) => Promise<void>) {
+    if (typeof action !== 'function') {
+      return
+    }
+    this._handleSubmit = action
+  }
+
+  /**
    * 用户本次投保结束 提交数据
    * @param data 提交时额外参数
    * @param successCallback 提交执行完后的回调
