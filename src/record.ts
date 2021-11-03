@@ -246,15 +246,20 @@ export default class Record {
    * @param {SubmitKeysData} data
    */
   private _submitKeyServer(data: SubmitKeysData) {
-    const fn = this._handleSubmit
-    if (typeof fn !== 'function') {
+    try {
+      const fn = this._handleSubmit
+      if (typeof fn !== 'function') {
+        throw new Error('提交方法不是函数')
+      }
+      const result = fn(data)
+      if (!result || !result.then) {
+        throw new Error('提交方法返回不符合要求')
+      }
+      return result.then(() => false).catch(() => data)
+    } catch (e) {
+      this._reportError(e as Error)
       return Promise.resolve(data)
     }
-    const result = fn(data)
-    if (!result || !result.then) {
-      return Promise.resolve(data)
-    }
-    return result.then(() => false).catch(() => data)
   }
 
   /**
@@ -313,9 +318,6 @@ export default class Record {
    * 设置上传方法 初始化没有提供oss key上传,可以通过此方法设置
    */
   setHandleSubmit(action: (data: SubmitKeysData) => Promise<void>) {
-    if (typeof action !== 'function') {
-      return
-    }
     this._handleSubmit = action
   }
 
