@@ -26,8 +26,8 @@ function getUUID() {
 }
 
 localforage.config({
-  name: '$$record',
-  storeName: '_record_data_',
+  name: 'ins-record',
+  storeName: 'recordData',
   description: '储存录屏数据'
 });
 
