@@ -329,7 +329,7 @@ const worker = {
    * 恢复录制 获取暂停前的录制内容
    */
   resumeSnapshot(payload: Snapshot) {
-    const {events, ossParams, ossKeys, otherData} = payload;
+    const {events, ossParams, ossKeys, otherData} = payload || {};
     this.recording = true
     this.events = events
     this.ossParams = ossParams
@@ -357,7 +357,7 @@ const worker = {
 self.onmessage = function (e) {
   const {action, payload} = e.data
   try {
-    worker[action as WorkerFnKey](payload || {})
+    worker[action as WorkerFnKey](payload)
   } catch (e) {
     self.postMessage({
       action: 'reportError',

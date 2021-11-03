@@ -22,7 +22,8 @@ export default {
     commonjs(),
     workerLoader({
       targetPlatform: 'browser',
-      extensions: ['.ts']
+      extensions: ['.ts'],
+      // preserveSource: true
     }),
     typescript(),
     terser({
