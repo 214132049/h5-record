@@ -250,7 +250,11 @@ export default class Record {
     if (typeof fn !== 'function') {
       return Promise.resolve(data)
     }
-    return fn(data).then(() => false).catch(() => data)
+    const result = fn(data)
+    if (!result || !result.then) {
+      return Promise.resolve(data)
+    }
+    return result.then(() => false).catch(() => data)
   }
 
   /**
