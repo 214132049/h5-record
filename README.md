@@ -66,16 +66,6 @@ Type: string
 Required: false  
 Default: ''
 
-`mergeToLast`
-
-Type: boolean  
-Required: false  
-Default: false
-
-ossPath相同时，本次录制数据是否与本地oss key最后一个合并
-
-> 受浏览器同源限制，同源页面下此属性才有效
-
 `isSubmitLocal`
 
 Type: Boolean  

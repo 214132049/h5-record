@@ -21,7 +21,7 @@ export interface OtherSubmitData {
 
 export type SubmitKeysData = {
   path: string,
-  fileName: string[]
+  fileName: string[][]
 } & OtherSubmitData
 
 export interface Snapshot {

@@ -11,7 +11,7 @@ import {
   SubmitKeysData,
   WorkerFnKey
 } from "./types";
-import {mergeObj} from "./utils";
+import {isPlainObject} from "./utils";
 
 /**
  * 生成uuid
@@ -83,7 +83,7 @@ const worker = {
    * @param params 提交的参数
    * @private
    */
-  submitOss(params: OssParam) {
+  async submitOss(params: OssParam) {
     const ossBaseParams = this.ossBaseParams;
     if (!ossBaseParams) {
       return Promise.resolve(params)
@@ -97,11 +97,18 @@ const worker = {
       if (!_params.hasOwnProperty(key)) continue;
       formData.append(key, _params[key]);
     }
-    return fetch(uploadHost, {
-      method: 'POST',
-      body: formData
-    }).then(res => res.status !== 200 ? Promise.reject('') : false)
-      .catch(() => params);
+    try {
+      const res = await fetch(uploadHost, {
+        method: 'POST',
+        body: formData
+      });
+      if (!res || res.status !== 200) {
+        throw new Error('上传失败')
+      }
+      return false;
+    } catch (e) {
+      return params;
+    }
   },
 
   /**
@@ -109,10 +116,8 @@ const worker = {
    * @param lastSubmit 标记用户提交了订单
    * @private
    */
-  submitOssParams (lastSubmit = false) {
-    const submitPromises = this.ossParams.splice(0, 5)
-      .filter(Boolean)
-      .map(v => this.submitOss(v));
+  submitOssParams(lastSubmit = false) {
+    const submitPromises = this.ossParams.splice(0, 5).map(v => this.submitOss(v));
     Promise.all(submitPromises).then((res) => {
       const failParams = res.filter(Boolean) as OssParam[];
       if (!lastSubmit) {
@@ -133,28 +138,15 @@ const worker = {
   /**
    * 提交文件上传oss文件key
    * @param data 要提交的内容
-   * @param mergeToLast  是否入最后一个合并
    * @private
    */
-  async submitKeys(data: SubmitKeysData[] | null, mergeToLast?: boolean) {
-    let body = [] as SubmitKeysData[]
-    if (data && data.length > 0) {
-      body = data
-    } else {
-      const path = this.ossBaseParams.ossPath
-      const keysParam = (await this.getLocalOssKeys()) || []
-      let lastFileName = this.ossKeys
-      if (keysParam.length > 0 && mergeToLast) {
-        const lastParam = keysParam.pop()
-        const canMerge = lastParam && lastParam.path === path
-        lastFileName = canMerge ? lastParam.fileName.concat(lastFileName) : lastFileName
-      }
-      body = keysParam.concat({
-        path,
-        fileName: lastFileName,
-        ...this.otherData
-      })
-    }
+  async submitKeys(data?: SubmitKeysData[]) {
+    const body = data && data.length > 0 ? data : [{
+      path: this.ossBaseParams.ossPath,
+      fileName: [this.ossKeys],
+      ...this.otherData,
+      h5Version: [this.otherData.h5Version]
+    }]
     self.postMessage({
       action: 'submitKey',
       payload: body
@@ -187,7 +179,7 @@ const worker = {
         return localforage.setItem(key, value);
       }
       const oldVal = await localforage.getItem(key)
-      const newVal = ((oldVal || []) as Array<OssParam|SubmitKeysData|RecordEvent|unknown>).concat(value)
+      const newVal = ((oldVal || []) as Array<OssParam | SubmitKeysData | RecordEvent | unknown>).concat(value)
       await localforage.setItem(key, newVal)
     } catch (e) {
       this.addLocalData(key, value, savaPrv);
@@ -225,21 +217,21 @@ const worker = {
   /**
    * 获取本地oss params
    */
-  async getLocalOssParams () {
+  async getLocalOssParams() {
     return this.getLocalData<OssParam>(OSS_EVENTS)
   },
 
   /**
    * 获取本地oss keys
    */
-  async getLocalOssKeys () {
+  async getLocalOssKeys() {
     return this.getLocalData<SubmitKeysData>(OSS_KEYS)
   },
 
   /**
    * 获取本地数据
    */
-  async getLocalData<T> (name: string) {
+  async getLocalData<T>(name: string) {
     const data = (await localforage.getItem(name).catch(() => null)) as Array<T> | null
     if (!data || data.length === 0) return null
     await localforage.removeItem(name)
@@ -250,7 +242,7 @@ const worker = {
    * 收集快照
    * @param data
    */
-  collectEvent(data: {event: any, isCheckout: boolean}) {
+  collectEvent(data: { event: any, isCheckout: boolean }) {
     const {event, isCheckout} = data;
     if (isCheckout) {
       this.events.push([]);
@@ -284,12 +276,12 @@ const worker = {
   /**
    * 用户本次投保结束 提交数据
    */
-  submitRecord(payload: { mergeToLast: boolean, data: OtherSubmitData }) {
+  async submitRecord(payload: OtherSubmitData) {
     this.recording = false
-    this.setOtherData(payload.data)
+    this.setOtherData(payload)
     this.getOssData()
     this.submitOssParams(true)
-    this.submitKeys(null, payload.mergeToLast)
+    this.submitKeys()
   },
 
   /**
@@ -313,7 +305,8 @@ const worker = {
    * 初始化
    */
   setOtherData(payload: OtherSubmitData) {
-    this.otherData = mergeObj<OtherSubmitData>(this.otherData, payload)
+    const data = isPlainObject(payload) ? payload : {}
+    this.otherData = {...this.otherData, ...data}
   },
 
   /**
@@ -351,7 +344,7 @@ const worker = {
       return
     }
     // 因为是分开提交 判断都提交完后再关闭
-    const el = ([] as Array<OssParam|string>).concat(this.ossParams, this.ossKeys);
+    const el = ([] as Array<OssParam | string>).concat(this.ossParams, this.ossKeys);
     if (el.length > 0) return;
     this.resetRecord();
     self.postMessage({

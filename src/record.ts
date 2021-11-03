@@ -34,8 +34,6 @@ export default class Record {
   private _bizType: string | undefined
   // oss 文件路径
   private _ossPath: string | undefined
-  // 是否与本地oss key最后一个合并
-  private _mergeToLast: boolean | undefined
   // oss上传参数获取 自定义方法
   private _preUploadGet: (() => Promise<OssBaseParams | null>) | undefined
   // 录制参数
@@ -69,7 +67,6 @@ export default class Record {
       isSubmitLocal = true,
       handleSubmit,
       ossPath = '',
-      mergeToLast = false,
       reportError = noop,
       ...recordOptions
     } = options;
@@ -78,7 +75,6 @@ export default class Record {
     this._preUploadUrl = preUploadUrl;
     this._ossPath = ossPath;
     this._bizType = bizType;
-    this._mergeToLast = Boolean(mergeToLast);
     this._preUploadGet = preUploadGet;
     this._snapshot = null
     this._successCallback = noop
@@ -321,10 +317,7 @@ export default class Record {
     }
     this._worker?.postMessage({
       action: 'submitRecord',
-      payload: {
-        mergeToLast: this._mergeToLast,
-        data
-      }
+      payload: data
     });
   }
 }
