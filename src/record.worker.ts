@@ -212,6 +212,7 @@ const worker = {
         fileName: this.ossKeys,
         ...this.otherData
       })
+      this.otherData = {}
     }
     this.submitKeys(keysParam);
   },
@@ -291,8 +292,7 @@ const worker = {
   resetRecord() {
     this.ossParams = [];
     this.ossKeys = [];
-    this.recording = false;
-    this.otherData = {}
+    this.recording = false
   },
 
   /**
