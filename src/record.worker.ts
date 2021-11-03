@@ -140,15 +140,13 @@ const worker = {
    * @param data 要提交的内容
    * @private
    */
-  async submitKeys(data?: SubmitKeysData[]) {
-    const body = data && data.length > 0 ? data : [{
-      path: this.ossBaseParams.ossPath,
-      fileName: this.ossKeys,
-      ...this.otherData
-    }]
+  async submitKeys(data: SubmitKeysData[]) {
+    if (data.length === 0) {
+      return
+    }
     self.postMessage({
       action: 'submitKey',
-      payload: body
+      payload: data
     })
   },
 
@@ -195,22 +193,27 @@ const worker = {
   },
 
   /**
-   * 提交本地保存的事件
+   * 提交本地保存的数据和最新产生的数据
    */
-  async submitLocal() {
-    const ossParams = await this.getLocalOssParams()
-    const keysParam = await this.getLocalOssKeys()
-    if (!ossParams && !keysParam) {
+  async submitOssParamsAndKeys(fromSubmit: boolean = false) {
+    const ossParams = await this.getLocalOssParams() || []
+    const keysParam = await this.getLocalOssKeys() || []
+    if (!fromSubmit && ossParams.length === 0 && keysParam.length === 0) {
       this.closeWorker();
       return;
     }
-    if (ossParams) {
-      this.ossParams = this.ossParams.concat(ossParams);
+    this.ossParams = this.ossParams.concat(ossParams)
+    if (this.ossParams.length > 0) {
       this.submitOssParams(true);
     }
-    if (keysParam) {
-      await this.submitKeys(keysParam);
+    if (fromSubmit) {
+      keysParam.push({
+        path: this.ossBaseParams.ossPath,
+        fileName: this.ossKeys,
+        ...this.otherData
+      })
     }
+    this.submitKeys(keysParam);
   },
 
   /**
@@ -279,8 +282,7 @@ const worker = {
     this.recording = false
     this.setOtherData(payload)
     this.getOssData()
-    this.submitOssParams(true)
-    this.submitKeys()
+    this.submitOssParamsAndKeys(true)
   },
 
   /**

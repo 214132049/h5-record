@@ -96,7 +96,7 @@ export default class Record {
     if (isSubmitLocal) {
       this._initWorker()
       this._worker?.postMessage({
-        action: 'submitLocal'
+        action: 'submitOssParamsAndKeys'
       });
     }
   }

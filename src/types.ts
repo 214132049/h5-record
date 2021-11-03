@@ -21,7 +21,7 @@ export interface OtherSubmitData {
 
 export type SubmitKeysData = {
   path: string,
-  fileName: string[][]
+  fileName: string[]
 } & OtherSubmitData
 
 export interface Snapshot {
@@ -31,7 +31,7 @@ export interface Snapshot {
   otherData: OtherSubmitData
 }
 
-export type WorkerFnKey = 'submitLocal' | 'setOssBaseParams' | 'saveKeys' | 'getSnapshot' | 'resumeSnapshot' | 'collectEvent' | 'startRecord' | 'submitRecord' | 'setOtherData'
+export type WorkerFnKey = 'submitOssParamsAndKeys' | 'setOssBaseParams' | 'saveKeys' | 'getSnapshot' | 'resumeSnapshot' | 'collectEvent' | 'startRecord' | 'submitRecord' | 'setOtherData'
 
 export interface WorkerCallback {
   submitKey: (payload: SubmitKeysData[]) => void,
@@ -53,8 +53,6 @@ export interface RecordOptions {
   bizType?: string,
   // oss 文件路径
   ossPath?: string
-  // 是否与本地oss key最后一个合并
-  mergeToLast?: boolean
   // oss上传参数获取 自定义方法
   preUploadGet?: (() => Promise<OssBaseParams|null>) | undefined
   // 是否提交本地储存的录制数据
