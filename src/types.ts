@@ -41,6 +41,10 @@ export interface WorkerCallback {
 }
 
 export interface RecordOptions {
+  // 项目名
+  name: string,
+  // 版本号
+  version: string,
   // oss kes提交方法
   handleSubmit: (data: SubmitKeysData) => Promise<void>,
   // 获取oss上传参数接口地址

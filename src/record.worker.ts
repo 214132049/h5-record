@@ -66,7 +66,7 @@ const worker = {
     const lastEvents = this.getLastEvents();
     const submitEvents = lastEvents.splice(0, submitThrottle);
     const ossFile = deflate(JSON.stringify(submitEvents), {level: 6}).toString();
-    const fileName = getUUID()
+    const fileName = this.otherData.h5Version + '$$'+ getUUID()
     const key = this.ossBaseParams.ossPath + fileName
     const params: OssParam = {key, file: ossFile}
     this.ossKeys.push(fileName)
@@ -143,9 +143,8 @@ const worker = {
   async submitKeys(data?: SubmitKeysData[]) {
     const body = data && data.length > 0 ? data : [{
       path: this.ossBaseParams.ossPath,
-      fileName: [this.ossKeys],
-      ...this.otherData,
-      h5Version: [this.otherData.h5Version]
+      fileName: this.ossKeys,
+      ...this.otherData
     }]
     self.postMessage({
       action: 'submitKey',
@@ -295,14 +294,14 @@ const worker = {
   },
 
   /**
-   * 初始化
+   * 设置oss提交参数
    */
   setOssBaseParams(payload: OssBaseParams) {
     this.ossBaseParams = payload;
   },
 
   /**
-   * 初始化
+   * 设置业务其他参数
    */
   setOtherData(payload: OtherSubmitData) {
     const data = isPlainObject(payload) ? payload : {}

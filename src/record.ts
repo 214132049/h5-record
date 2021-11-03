@@ -34,6 +34,8 @@ export default class Record {
   private _bizType: string | undefined
   // oss 文件路径
   private _ossPath: string | undefined
+  // 录制项目信息
+  private _projectInfo: string | undefined
   // oss上传参数获取 自定义方法
   private _preUploadGet: (() => Promise<OssBaseParams | null>) | undefined
   // 录制参数
@@ -67,6 +69,8 @@ export default class Record {
       isSubmitLocal = true,
       handleSubmit,
       ossPath = '',
+      name = '',
+      version = '',
       reportError = noop,
       ...recordOptions
     } = options;
@@ -77,6 +81,7 @@ export default class Record {
     this._bizType = bizType;
     this._preUploadGet = preUploadGet;
     this._snapshot = null
+    this._projectInfo = name + '$$' + version
     this._successCallback = noop
     this._handleSubmit = handleSubmit;
     this._reportError = reportError;
@@ -97,6 +102,9 @@ export default class Record {
   }
 
   private static _checkOptions(options: RecordOptions) {
+    if (!options.name || !options.version) {
+      throw new Error('请提供项目名以及版本号')
+    }
     if (!options.bizType) {
       throw new Error('请提供OSS上传bizType')
     }
@@ -149,6 +157,10 @@ export default class Record {
     this._worker.onmessageerror = (e: MessageEvent) => {
       typeof this._reportError === 'function' && this._reportError(e)
     };
+    this._worker?.postMessage({
+      action: 'setOtherData',
+      payload: { h5Version: this._projectInfo }
+    });
     this._worker.onmessage = this._workerMessageHandler.bind(this);
     getUploadParams(this._preUploadUrl, this._bizType, this._preUploadGet).then((res: OssBaseParams | null) => {
       if (!res) return

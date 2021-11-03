@@ -21,6 +21,24 @@ record.startRecord()
 
 ### 配置项:
 
+`name`
+
+Type: string  
+Required: true  
+Default: ''
+
+项目名
+
+`version`
+
+Type: string  
+Required: true  
+Default: ''
+
+版本号
+
+> 回放录制数据时，根据项目名+版本号查找录制时的静态资源
+
 `handleSubmit`
 
 Type: (data: SubmitKeysData) => Promise<void>  
