@@ -186,7 +186,7 @@ export default class Record {
    * 检测用户是否有操作
    * 一定时间内没有操作 暂时关闭web worker 释放内存
    */
-  _suspendWorker(time: number = 5) {
+  _suspendWorker(time: number = 0) {
     clearTimeout(closeWorkerTimer);
     closeWorkerTimer = setTimeout(() => {
       this._worker?.postMessage({
@@ -230,7 +230,7 @@ export default class Record {
    * @param isCheckout // isCheckout 是一个标识，说明重新制作了快照
    */
   private _collectEvent(event: any, isCheckout?: boolean) {
-    this._suspendWorker();
+    this._suspendWorker(5);
     this._resumeWorker();
     this._worker?.postMessage({
       action: 'collectEvent',
@@ -287,14 +287,7 @@ export default class Record {
    * 继续录制
    */
   resumeRecord() {
-    this._initWorker()
-    if (this._snapshot) {
-      this._worker?.postMessage({
-        action: 'resumeSnapshot',
-        payload: this._snapshot
-      });
-      this._snapshot = null;
-    }
+    this._resumeWorker();
     this._startRecord()
   }
 
