@@ -143,4 +143,8 @@ Default: () => {}
 
 设置oss key数据上传方法，初始化时没有配置`handleSubmit`,可以通过此方法设置
 
+`startWorkerAndSubmit`  
+@param data: SubmitKeysData[]  提交包含oss key的录制数据
+@return void
 
+开启worker并上传数据，不录制

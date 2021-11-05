@@ -195,10 +195,11 @@ const worker = {
   /**
    * 提交本地保存的数据和最新产生的数据
    */
-  async submitOssParamsAndKeys(fromSubmit: boolean = false) {
+  async submitLocalAndLatest(params: {lastSubmit?: boolean, data?: SubmitKeysData[]}) {
+    const {lastSubmit = false, data = []} = params
     const ossParams = await this.getLocalOssParams() || []
-    const keysParam = await this.getLocalOssKeys() || []
-    if (!fromSubmit && ossParams.length === 0 && keysParam.length === 0) {
+    let keysParam = await this.getLocalOssKeys() || []
+    if (!lastSubmit && ossParams.length === 0 && keysParam.length === 0) {
       this.closeWorker();
       return;
     }
@@ -206,7 +207,8 @@ const worker = {
     if (this.ossParams.length > 0) {
       this.submitOssParams(true);
     }
-    if (fromSubmit) {
+    keysParam = keysParam.concat(data)
+    if (lastSubmit) {
       keysParam.push({
         path: this.ossBaseParams.ossPath,
         fileName: this.ossKeys,
@@ -283,7 +285,7 @@ const worker = {
     this.recording = false
     this.setOtherData(payload)
     this.getOssData()
-    this.submitOssParamsAndKeys(true)
+    this.submitLocalAndLatest({ lastSubmit: true })
   },
 
   /**

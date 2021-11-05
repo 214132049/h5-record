@@ -12,16 +12,6 @@ import {
   WorkerCallback
 } from "./types";
 
-/**
- * 创建worker
- */
-function createWorker(): Worker {
-  if (!window.Worker) {
-    new Error('你的当前运行环境不支持web worker')
-  }
-  return new RecordWorker();
-}
-
 // 关闭worker定时器
 let closeWorkerTimer: number;
 
@@ -94,10 +84,7 @@ export default class Record {
       emit: this._collectEvent.bind(this),
     };
     if (isSubmitLocal) {
-      this._initWorker()
-      this._worker?.postMessage({
-        action: 'submitOssParamsAndKeys'
-      });
+      this._initSubmit()
     }
   }
 
@@ -114,6 +101,21 @@ export default class Record {
     if (typeof options.handleSubmit !== 'function') {
       console.error('没有实现上传oss key方法, 数据将保存到本地!!!')
     }
+  }
+
+  /**
+   * 创建worker
+   */
+  private _createWorker(): Worker {
+    if (!window.Worker) {
+      new Error('你的当前运行环境不支持web worker')
+    }
+    const worker: Worker = new RecordWorker();
+    worker.onmessageerror = (e: MessageEvent) => {
+      typeof this._reportError === 'function' && this._reportError(e)
+    };
+    worker.onmessage = this._workerMessageHandler.bind(this);
+    return worker
   }
 
   private _workerMessageHandler(e: MessageEvent) {
@@ -153,15 +155,11 @@ export default class Record {
     if (this._worker) {
       return
     }
-    this._worker = createWorker();
-    this._worker.onmessageerror = (e: MessageEvent) => {
-      typeof this._reportError === 'function' && this._reportError(e)
-    };
+    this._worker = this._createWorker();
     this._worker?.postMessage({
       action: 'setOtherData',
-      payload: { h5Version: this._projectInfo }
+      payload: {h5Version: this._projectInfo}
     });
-    this._worker.onmessage = this._workerMessageHandler.bind(this);
     getUploadParams(this._preUploadUrl, this._bizType, this._preUploadGet).then((res: OssBaseParams | null) => {
       if (!res) return
       if (this._ossPath) {
@@ -262,6 +260,16 @@ export default class Record {
     }
   }
 
+  private _initSubmit (data: SubmitKeysData[] = []) {
+    this._initWorker()
+    this._worker?.postMessage({
+      action: 'submitLocalAndLatest',
+      payload: {
+        data
+      }
+    });
+  }
+
   /**
    * 开始记录操作
    * @param data 开始录制时 设置额外提交参数
@@ -312,6 +320,15 @@ export default class Record {
    */
   setHandleSubmit(action: (data: SubmitKeysData) => Promise<void>) {
     this._handleSubmit = action
+  }
+
+  /**
+   * 不录制只提交数据
+   */
+  startWorkerAndSubmit(data: SubmitKeysData) {
+    if (!data) return
+    const _data = Array.isArray(data) ? data : [data]
+    this._initSubmit(_data)
   }
 
   /**

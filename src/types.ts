@@ -31,7 +31,7 @@ export interface Snapshot {
   otherData: OtherSubmitData
 }
 
-export type WorkerFnKey = 'submitOssParamsAndKeys' | 'setOssBaseParams' | 'saveKeys' | 'getSnapshot' | 'resumeSnapshot' | 'collectEvent' | 'startRecord' | 'submitRecord' | 'setOtherData'
+export type WorkerFnKey = 'submitLocalAndLatest' | 'setOssBaseParams' | 'saveKeys' | 'getSnapshot' | 'resumeSnapshot' | 'collectEvent' | 'startRecord' | 'submitRecord' | 'setOtherData'
 
 export interface WorkerCallback {
   submitKey: (payload: SubmitKeysData[]) => void,
