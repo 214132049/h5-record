@@ -273,9 +273,12 @@ export default class Record {
   /**
    * 不录制只提交数据
    */
-  static startWorkerAndSubmit(data: SubmitKeysData[]) {
+  static startWorkerAndSubmit(data: SubmitKeysData[], successCallback = noop) {
     if (!data) return
     const _data = isArray(data) ? data : [data]
+    if (typeof successCallback === "function") {
+      Record._successCallback = successCallback
+    }
     this._initSubmit(_data as SubmitKeysData[])
   }
 

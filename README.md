@@ -145,6 +145,7 @@ Default: () => {}
 
 `startWorkerAndSubmit`  
 @param data: SubmitKeysData[]  提交包含oss key的录制数据
+@params successCallback: () => void
 @return void
 
-静态方法，开启worker并上传数据，不录制
+静态方法，开启worker并上传数据，不录制。可提供一个回调函数，在数据提交完成后调用
