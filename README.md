@@ -147,4 +147,4 @@ Default: () => {}
 @param data: SubmitKeysData[]  提交包含oss key的录制数据
 @return void
 
-开启worker并上传数据，不录制
+静态方法，开启worker并上传数据，不录制

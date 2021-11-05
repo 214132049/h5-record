@@ -72,3 +72,5 @@ export async function getUploadParams(fetchUrl?: string, biz_type?: string, preU
 }
 
 export const isPlainObject = (obj: any) => Object.prototype.toString.call(obj) === '[object Object]'
+
+export const isArray = (obj: any) => Object.prototype.toString.call(obj) === '[object Array]'

@@ -2,7 +2,7 @@
 import RecordWorker from 'web-worker:./record.worker.ts'
 // @ts-ignore
 import record from './rrweb-record'
-import {getUploadParams, noop} from "./utils";
+import {getUploadParams, isArray, noop} from "./utils";
 import {
   OssBaseParams,
   OtherSubmitData,
@@ -19,39 +19,39 @@ export default class Record {
   // 录制实例
   private static _instance: Record
   // 获取oss上传参数接口地址
-  private _preUploadUrl: string | undefined
+  private static _preUploadUrl: string | undefined
   // oss bizType
-  private _bizType: string | undefined
+  private static _bizType: string | undefined
   // oss 文件路径
-  private _ossPath: string | undefined
+  private static _ossPath: string | undefined
   // 录制项目信息
-  private _projectInfo: string | undefined
+  private static _projectInfo: string | undefined
   // oss上传参数获取 自定义方法
-  private _preUploadGet: (() => Promise<OssBaseParams | null>) | undefined
+  private static _preUploadGet: (() => Promise<OssBaseParams | null>) | undefined
   // 录制参数
-  private _recordOptions: any
+  private static _recordOptions: any
   // oss kes提交方法
-  private _handleSubmit: ((data: SubmitKeysData) => Promise<void>) | undefined
+  private static _handleSubmit: ((data: SubmitKeysData) => Promise<void>) | undefined
   // 停止录制
-  private _stopRecord!: null | (() => void)
+  private static _stopRecord: null | (() => void)
   // worker实例
-  private _worker!: Worker | null
+  private static _worker: Worker | null
   // 录制快照
-  private _snapshot!: null | Snapshot
+  private static _snapshot: null | Snapshot
   // 错误捕捉方法
-  private _reportError!: (err: MessageEvent | Error) => void
+  private static _reportError: (err: MessageEvent | Error) => void
   // oss key提交后的回调
-  private _successCallback!: () => any
+  private static _successCallback: () => any
 
   constructor(options: RecordOptions) {
     if (Record._instance) {
       return Record._instance;
     }
-    this._init(options)
+    Record._init(options)
     Record._instance = this;
   }
 
-  _init(options: RecordOptions) {
+  private static _init(options: RecordOptions) {
     const {
       preUploadUrl = '',
       bizType = '',
@@ -64,7 +64,7 @@ export default class Record {
       reportError = noop,
       ...recordOptions
     } = options;
-    Record._checkOptions(options)
+    this._checkOptions(options)
     this._stopRecord = null;
     this._preUploadUrl = preUploadUrl;
     this._ossPath = ossPath;
@@ -106,7 +106,7 @@ export default class Record {
   /**
    * 创建worker
    */
-  private _createWorker(): Worker {
+  private static _createWorker(): Worker {
     if (!window.Worker) {
       new Error('你的当前运行环境不支持web worker')
     }
@@ -118,7 +118,7 @@ export default class Record {
     return worker
   }
 
-  private _workerMessageHandler(e: MessageEvent) {
+  private static _workerMessageHandler(e: MessageEvent) {
     const {action, payload} = e.data;
     const fnMap: WorkerCallback = {
       submitKey: (payload: SubmitKeysData[]) => {
@@ -151,7 +151,7 @@ export default class Record {
   /**
    * 初始化web worker
    */
-  private _initWorker() {
+  private static _initWorker() {
     if (this._worker) {
       return
     }
@@ -175,7 +175,7 @@ export default class Record {
   /**
    * 关闭web worker
    */
-  private _closeWorker() {
+  private static _closeWorker() {
     this._worker?.terminate()
     this._worker = null
   }
@@ -184,7 +184,7 @@ export default class Record {
    * 检测用户是否有操作
    * 一定时间内没有操作 暂时关闭web worker 释放内存
    */
-  _suspendWorker(time: number = 0) {
+  private static _suspendWorker(time: number = 0) {
     clearTimeout(closeWorkerTimer);
     closeWorkerTimer = setTimeout(() => {
       this._worker?.postMessage({
@@ -196,7 +196,7 @@ export default class Record {
   /**
    * 重启web worker 并向新worker传递暂停之前的内容
    */
-  private _resumeWorker() {
+  private static _resumeWorker() {
     this._initWorker();
     if (this._snapshot) {
       this._worker?.postMessage({
@@ -210,14 +210,14 @@ export default class Record {
   /**
    * 开始录制
    */
-  private _startRecord() {
+  private static _startRecord() {
     this._stopRecord = record(this._recordOptions);
   }
 
   /**
    * 关闭录制
    */
-  private _closeRecord() {
+  private static _closeRecord() {
     this._stopRecord && this._stopRecord()
     this._stopRecord = null
   }
@@ -227,7 +227,7 @@ export default class Record {
    * @param event 快照
    * @param isCheckout // isCheckout 是一个标识，说明重新制作了快照
    */
-  private _collectEvent(event: any, isCheckout?: boolean) {
+  private static _collectEvent(event: any, isCheckout?: boolean) {
     this._suspendWorker(5);
     this._resumeWorker();
     this._worker?.postMessage({
@@ -243,7 +243,7 @@ export default class Record {
    * 提交oss key
    * @param {SubmitKeysData} data
    */
-  private _submitKeyServer(data: SubmitKeysData) {
+  private static _submitKeyServer(data: SubmitKeysData) {
     try {
       const fn = this._handleSubmit
       if (typeof fn !== 'function') {
@@ -260,7 +260,7 @@ export default class Record {
     }
   }
 
-  private _initSubmit (data: SubmitKeysData[] = []) {
+  private static _initSubmit (data: SubmitKeysData[] = []) {
     this._initWorker()
     this._worker?.postMessage({
       action: 'submitLocalAndLatest',
@@ -271,47 +271,56 @@ export default class Record {
   }
 
   /**
+   * 不录制只提交数据
+   */
+  static startWorkerAndSubmit(data: SubmitKeysData[]) {
+    if (!data) return
+    const _data = isArray(data) ? data : [data]
+    this._initSubmit(_data as SubmitKeysData[])
+  }
+
+  /**
    * 开始记录操作
    * @param data 开始录制时 设置额外提交参数
    */
   startRecord(data: OtherSubmitData) {
-    this._initWorker();
-    this._worker?.postMessage({
+    Record._initWorker();
+    Record._worker?.postMessage({
       action: 'startRecord',
       payload: data
     });
-    this._startRecord()
+    Record._startRecord()
   }
 
   /**
    * 关闭录制
    */
   closeRecord() {
-    this._closeRecord()
-    this._closeWorker();
+    Record._closeRecord()
+    Record._closeWorker();
   }
 
   /**
    * 继续录制
    */
   resumeRecord() {
-    this._resumeWorker();
-    this._startRecord()
+    Record._resumeWorker();
+    Record._startRecord()
   }
 
   /**
    * 暂停录制
    */
   suspendRecord() {
-    this._closeRecord()
-    this._suspendWorker()
+    Record._closeRecord()
+    Record._suspendWorker()
   }
 
   /**
    * 重新生成全量快照
    */
   takeFullSnapshot() {
-    if (this._stopRecord) return
+    if (Record._stopRecord) return
     record.takeFullSnapshot(true)
   }
 
@@ -319,16 +328,7 @@ export default class Record {
    * 设置上传方法 初始化没有提供oss key上传,可以通过此方法设置
    */
   setHandleSubmit(action: (data: SubmitKeysData) => Promise<void>) {
-    this._handleSubmit = action
-  }
-
-  /**
-   * 不录制只提交数据
-   */
-  startWorkerAndSubmit(data: SubmitKeysData) {
-    if (!data) return
-    const _data = Array.isArray(data) ? data : [data]
-    this._initSubmit(_data)
+    Record._handleSubmit = action
   }
 
   /**
@@ -337,13 +337,13 @@ export default class Record {
    * @param successCallback 提交执行完后的回调
    */
   submitRecord(data: OtherSubmitData = {}, successCallback = noop) {
-    if (!this._stopRecord) return
-    this._closeRecord()
+    if (!Record._stopRecord) return
+    Record._closeRecord()
     clearTimeout(closeWorkerTimer)
     if (typeof successCallback === "function") {
-      this._successCallback = successCallback
+      Record._successCallback = successCallback
     }
-    this._worker?.postMessage({
+    Record._worker?.postMessage({
       action: 'submitRecord',
       payload: data
     });
