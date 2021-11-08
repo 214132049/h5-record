@@ -40,13 +40,15 @@ export interface WorkerCallback {
   reportError: (err: Error | MessageEvent) => void
 }
 
+export type HandleSubmit = (data: SubmitKeysData) => Promise<void>
+
 export interface RecordOptions {
   // 项目名
   name: string,
   // 版本号
   version: string,
   // oss kes提交方法
-  handleSubmit: (data: SubmitKeysData) => Promise<void>,
+  handleSubmit: HandleSubmit,
   // 获取oss上传参数接口地址
   preUploadUrl?: string,
   // oss bizType

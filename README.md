@@ -143,9 +143,11 @@ Default: () => {}
 
 设置oss key数据上传方法，初始化时没有配置`handleSubmit`,可以通过此方法设置
 
-`startWorkerAndSubmit`  
-@param data: SubmitKeysData[]  提交包含oss key的录制数据
-@params successCallback: () => void
+`startWorkerAndSubmit` `静态方法`  
+@param {Object} params  函数参数  
+@param {Array[]} params.data: SubmitKeysData[]  提交包含oss key的录制数据  
+@param {Function} [params.handleSubmit]: (data: SubmitKeysData) => Promise<void>  提交函数, 同配置  
+@params {Callback} [params.successCallback]: () => void
 @return void
 
-静态方法，开启worker并上传数据，不录制。可提供一个回调函数，在数据提交完成后调用
+开启worker并上传数据，不录制。可提供一个回调函数，在数据提交完成后调用
