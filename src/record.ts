@@ -40,7 +40,7 @@ export default class Record {
   // 录制快照
   private static _snapshot: null | Snapshot
   // 错误捕捉方法
-  private static _reportError: (err: MessageEvent | Error) => void
+  private static _reportError: (err: MessageEvent | Error) => void = noop
   // oss key提交后的回调
   private static _successCallback: () => any
 
@@ -167,9 +167,10 @@ export default class Record {
 
   /**
    * 初始化web worker
+   * @param {boolean} [onlyWorker=false] 是否仅创建worker
    * @private
    */
-  private static _initWorker() {
+  private static _initWorker(onlyWorker: boolean = false) {
     if (this._worker) {
       return
     }
@@ -178,6 +179,7 @@ export default class Record {
       action: 'setOtherData',
       payload: {h5Version: this._projectInfo}
     });
+    if (onlyWorker) return;
     getUploadParams(this._preUploadUrl, this._bizType, this._preUploadGet).then((res: OssBaseParams | null) => {
       if (!res) return
       if (this._ossPath) {
@@ -290,7 +292,7 @@ export default class Record {
    * @private
    */
   private static _initSubmit (data: SubmitKeysData[] = []) {
-    this._initWorker()
+    this._initWorker(data.length > 0)
     this._worker?.postMessage({
       action: 'submitLocalAndLatest',
       payload: {
