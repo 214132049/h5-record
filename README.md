@@ -147,7 +147,8 @@ Default: () => {}
 @param {Object} params  函数参数  
 @param {Array[]} params.data: SubmitKeysData[]  提交包含oss key的录制数据  
 @param {Function} [params.handleSubmit]: (data: SubmitKeysData) => Promise<void>  提交函数, 同配置  
-@params {Callback} [params.successCallback]: () => void
+@params {Callback} [params.successCallback]: () => void   提交成功回调
+@params {Callback} [params.handleError]: () => void  提交失败回调
 @return void
 
 开启worker并上传数据，不录制。可提供一个回调函数，在数据提交完成后调用

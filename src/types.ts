@@ -42,6 +42,8 @@ export interface WorkerCallback {
 
 export type HandleSubmit = (data: SubmitKeysData) => Promise<void>
 
+export type HandleError = (err: MessageEvent | Error) => void
+
 export interface RecordOptions {
   // 项目名
   name: string,

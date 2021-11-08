@@ -4,6 +4,7 @@ import RecordWorker from 'web-worker:./record.worker.ts'
 import record from './rrweb-record'
 import {getUploadParams, isArray, noop} from "./utils";
 import {
+  HandleError,
   HandleSubmit,
   OssBaseParams,
   OtherSubmitData,
@@ -40,7 +41,7 @@ export default class Record {
   // 录制快照
   private static _snapshot: null | Snapshot
   // 错误捕捉方法
-  private static _reportError: (err: MessageEvent | Error) => void = noop
+  private static _reportError: HandleError = noop
   // oss key提交后的回调
   private static _successCallback: () => any
 
@@ -307,9 +308,10 @@ export default class Record {
    * @param {Array[]} params.data 录制数据
    * @param {Function} [params.handleSubmit]  提交函数
    * @param {Function} [params.successCallback=()=>{}] 成功回调函数
+   * @param {Function} [params.handleError=()=>{}] 成功回调函数
    */
-  static startWorkerAndSubmit(params: {data: SubmitKeysData[], handleSubmit?: HandleSubmit, successCallback?: () => void}) {
-    const { data, handleSubmit, successCallback = noop } = params
+  static startWorkerAndSubmit(params: {data: SubmitKeysData[], handleSubmit?: HandleSubmit, successCallback?: () => void, handleError?: HandleError}) {
+    const { data, handleSubmit, successCallback = noop, handleError } = params
     if (!data) return
     if (typeof handleSubmit !== 'function' && !this._handleSubmit) {
       console.error('没有实现上传oss key方法, 数据将保存到本地!!!')
@@ -319,10 +321,18 @@ export default class Record {
       oldHandleSubmit = this._handleSubmit
       this._handleSubmit = handleSubmit
     }
+    let oldHandleError: HandleError | undefined = undefined
+    if (handleError && typeof handleError === 'function') {
+      oldHandleError = this._reportError
+      this._reportError = handleError
+    }
     const _data = isArray(data) ? data : [data]
     this._successCallback = () => {
       if (oldHandleSubmit) {
         this._handleSubmit = oldHandleSubmit
+      }
+      if (oldHandleError) {
+        this._reportError = oldHandleError
       }
       typeof successCallback === "function" && successCallback()
     }
