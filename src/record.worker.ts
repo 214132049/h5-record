@@ -199,6 +199,7 @@ const worker = {
     const {lastSubmit = false, data = []} = params
     const ossParams = await this.getLocalOssParams() || []
     let keysParam = await this.getLocalOssKeys() || []
+    keysParam = keysParam.concat(data)
     if (!lastSubmit && ossParams.length === 0 && keysParam.length === 0) {
       this.closeWorker();
       return;
@@ -207,7 +208,6 @@ const worker = {
     if (this.ossParams.length > 0) {
       this.submitOssParams(true);
     }
-    keysParam = keysParam.concat(data)
     if (lastSubmit) {
       keysParam.push({
         path: this.ossBaseParams.ossPath,
