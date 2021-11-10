@@ -292,7 +292,7 @@ export default class Record {
    * @param {Array<SubmitKeysData>} data 录制数据
    * @private
    */
-  private static _initSubmit (data: SubmitKeysData[] = []) {
+  private static _initSubmit(data: SubmitKeysData[] = []) {
     this._initWorker(data.length > 0)
     this._worker?.postMessage({
       action: 'submitLocalAndLatest',
@@ -310,8 +310,8 @@ export default class Record {
    * @param {Function} [params.successCallback=()=>{}] 成功回调函数
    * @param {Function} [params.handleError=()=>{}] 成功回调函数
    */
-  static startWorkerAndSubmit(params: {data: SubmitKeysData[], handleSubmit?: HandleSubmit, successCallback?: () => void, handleError?: HandleError}) {
-    const { data, handleSubmit, successCallback = noop, handleError } = params
+  static startWorkerAndSubmit(params: { data: SubmitKeysData[], handleSubmit?: HandleSubmit, successCallback?: () => void, handleError?: HandleError }) {
+    const {data, handleSubmit, successCallback = noop, handleError} = params
     if (!data) return
     if (typeof handleSubmit !== 'function' && !this._handleSubmit) {
       console.error('没有实现上传oss key方法, 数据将保存到本地!!!')
@@ -343,7 +343,7 @@ export default class Record {
    * 开始记录操作
    * @param {Object} data 开始录制时 设置额外提交参数
    */
-  startRecord(data: OtherSubmitData) {
+  startRecord(data?: OtherSubmitData) {
     Record._initWorker();
     Record._worker?.postMessage({
       action: 'startRecord',
@@ -404,6 +404,7 @@ export default class Record {
     if (!Record._stopRecord) return
     Record._closeRecord()
     clearTimeout(closeWorkerTimer)
+    Record._resumeWorker()
     if (typeof successCallback === "function") {
       Record._successCallback = successCallback
     }
