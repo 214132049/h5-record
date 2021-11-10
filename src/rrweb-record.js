@@ -238,7 +238,10 @@ function getHref() {
     return a.href;
 }
 function transformAttribute(doc, tagName, name, value) {
-    if (name === 'src' || ((name === 'href' || name === 'xlink:href') && value)) {
+    if (name === 'src' || (name === 'href' && value)) {
+        return absoluteToDoc(doc, value);
+    }
+    else if (name === 'xlink:href' && value && value[0] !== '#') {
         return absoluteToDoc(doc, value);
     }
     else if (name === 'background' &&
