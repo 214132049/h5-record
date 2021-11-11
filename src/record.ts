@@ -71,7 +71,12 @@ export default class Record {
       reportError = noop,
       ...recordOptions
     } = options;
-    this._checkOptions(options)
+    try {
+      this._checkOptions(options)
+    } catch (e) {
+      console.error('[录制SDK实例化失败]:' + (e as Error).message)
+      return
+    }
     this._stopRecord = null;
     this._preUploadUrl = preUploadUrl;
     this._ossPath = ossPath;
@@ -109,9 +114,6 @@ export default class Record {
     }
     if (!options.preUploadUrl) {
       throw new Error('请提供获取oss上传参数接口地址')
-    }
-    if (typeof options.handleSubmit !== 'function') {
-      console.error('没有实现上传oss key方法, 数据将保存到本地!!!')
     }
   }
 
@@ -274,14 +276,15 @@ export default class Record {
     try {
       const fn = this._handleSubmit
       if (typeof fn !== 'function') {
-        throw new Error('提交方法不是函数')
+        throw new Error('handleSubmit不是函数')
       }
       const result = fn(data)
       if (!result || !result.then) {
-        throw new Error('提交方法返回不符合要求')
+        throw new Error('handleSubmit返回不符合要求')
       }
       return result.then(() => false).catch(() => data)
     } catch (e) {
+      console.error('[oss Key提交失败]:', (e as Error).message)
       this._reportError(e as Error)
       return Promise.resolve(data)
     }
@@ -313,9 +316,6 @@ export default class Record {
   static startWorkerAndSubmit(params: { data: SubmitKeysData[], handleSubmit?: HandleSubmit, successCallback?: () => void, handleError?: HandleError }) {
     const {data, handleSubmit, successCallback = noop, handleError} = params
     if (!data) return
-    if (typeof handleSubmit !== 'function' && !this._handleSubmit) {
-      console.error('没有实现上传oss key方法, 数据将保存到本地!!!')
-    }
     let oldHandleSubmit: HandleSubmit | undefined = undefined
     if (handleSubmit) {
       oldHandleSubmit = this._handleSubmit
@@ -389,9 +389,6 @@ export default class Record {
    * @param action 录制数据提交函数
    */
   setHandleSubmit(action: HandleSubmit) {
-    if (typeof action !== 'function') {
-      console.error('没有实现上传oss key方法, 数据将保存到本地!!!')
-    }
     Record._handleSubmit = action
   }
 
