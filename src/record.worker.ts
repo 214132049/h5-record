@@ -37,9 +37,6 @@ const maxLength = 100;
 // 分批提交的阈值
 const submitThrottle = 10;
 
-// 防抖定时器
-let debounceTimer = 0;
-
 const LOG_KEY = 'log_events';
 const OSS_EVENTS = 'oss_events';
 const OSS_KEYS = 'oss_keys';
@@ -270,11 +267,8 @@ const worker = {
     lastEvents.push(event);
     const lastLength = lastEvents.length;
     if (lastLength > 0 && lastLength % submitThrottle === 0) {
-      clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        this.getOssData()
-        this.submitOssParams()
-      }, 100);
+      this.getOssData()
+      this.submitOssParams()
     }
     // clearTimeout(timer);
     // timer = setTimeout(() => {

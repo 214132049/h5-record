@@ -170,6 +170,9 @@ export default class Record {
         } catch (e) {
         }
       },
+      logger: (payload: any) => {
+        console.log(payload)
+      },
       reportError: this._reportError
     };
     fnMap[action as keyof WorkerCallback](payload);

@@ -40,6 +40,7 @@ export interface WorkerCallback {
   submitKey: (payload: SubmitKeysData[]) => void,
   postSnapshot: (payload: Snapshot) => void,
   closeWorker: () => void,
+  logger: (val: any) => void,
   reportError: (err: Error | MessageEvent) => void
 }
 
