@@ -362,6 +362,13 @@ const worker = {
     self.postMessage({
       action: 'closeWorker'
     })
+  },
+  
+  logger(data: any) {
+    self.postMessage({
+      action: 'logger',
+      payload: data
+    })
   }
 }
 
