@@ -11,7 +11,7 @@ import {
   SubmitKeysData,
   WorkerFnKey
 } from "./types";
-import {isPlainObject} from "./utils";
+import {fetchJson, isPlainObject} from "./utils";
 
 /**
  * 生成uuid
@@ -105,8 +105,22 @@ const worker = {
       if (!res || res.status !== 200) {
         throw new Error('上传失败')
       }
+      const checkRes = await fetchJson(this.otherData.checkUrl, {
+        bizType: this.otherData.bizType,
+        keyList: [params.key]
+      })
+      if (checkRes.result !== 1 || checkRes.content.length === 0) {
+        throw new Error('文件校验失败')
+      }
       return false;
     } catch (e) {
+      self.postMessage({
+        action: 'reportError',
+        payload: JSON.stringify({
+          message: (e as ErrorEvent).message,
+          data: params
+        })
+      })
       return params;
     }
   },
@@ -214,7 +228,7 @@ const worker = {
         fileName: this.ossKeys,
         ...this.otherData
       })
-      this.otherData = {}
+      this.otherData = {} as OtherSubmitData
     }
     this.submitKeys(keysParam);
   },

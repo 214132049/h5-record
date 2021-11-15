@@ -7,6 +7,21 @@ export const noop = () => {
 }
 
 /**
+ * 封装的fetch
+ * @param url 请求地址
+ * @param data 请求参数
+ */
+export const fetchJson = (url: string, data: any) => {
+  return fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  }).then(res => res.json())
+}
+
+/**
  * 获取policy
  */
 function getPolicy() {
@@ -34,17 +49,11 @@ export async function getUploadParams(fetchUrl?: string, biz_type?: string, preU
   if (typeof preUploadGet === 'function') {
     data = await preUploadGet()
   } else if (fetchUrl && biz_type) {
-    data = await fetch(fetchUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        prepare2UploadReqDTOs: [
-          {bizType: biz_type, fileCount: 1}
-        ]
-      })
-    }).then(res => res.json()).catch(() => null)
+    data = await fetchJson(fetchUrl, {
+      prepare2UploadReqDTOs: [
+        {bizType: biz_type, fileCount: 1}
+      ]
+    }).catch(() => null)
   } else {
     throw new Error('请设置url, biz_type或实现获取oss参数方法')
   }

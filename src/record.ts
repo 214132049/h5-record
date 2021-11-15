@@ -20,16 +20,18 @@ let closeWorkerTimer: number;
 export default class Record {
   // 录制实例
   private static _instance: Record
-  // 获取oss上传参数接口地址
-  private static _preUploadUrl: string | undefined
   // oss bizType
   private static _bizType: string | undefined
   // oss 文件路径
   private static _ossPath: string | undefined
-  // 录制项目信息
-  private static _projectInfo: string | undefined
+  // 获取oss上传参数接口地址
+  private static _preUploadUrl: string | undefined
   // oss上传参数获取 自定义方法
   private static _preUploadGet: (() => Promise<OssBaseParams | null>) | undefined
+  // 检测oss上传结果接口地址
+  private static _checkUploadUrl: string | undefined
+  // 录制项目信息
+  private static _projectInfo: string | undefined
   // 录制参数
   private static _recordOptions: any
   // oss kes提交方法
@@ -64,6 +66,7 @@ export default class Record {
       bizType = '',
       preUploadGet,
       isSubmitLocal = true,
+      checkUploadUrl = '',
       handleSubmit,
       ossPath = '',
       name = '',
@@ -78,10 +81,11 @@ export default class Record {
       return
     }
     this._stopRecord = null;
-    this._preUploadUrl = preUploadUrl;
-    this._ossPath = ossPath;
     this._bizType = bizType;
+    this._ossPath = ossPath;
+    this._preUploadUrl = preUploadUrl;
     this._preUploadGet = preUploadGet;
+    this._checkUploadUrl = checkUploadUrl;
     this._snapshot = null
     this._projectInfo = name + '$$' + version
     this._successCallback = noop
@@ -114,6 +118,9 @@ export default class Record {
     }
     if (!options.preUploadUrl) {
       throw new Error('请提供获取oss上传参数接口地址')
+    }
+    if (!options.checkUploadUrl) {
+      throw new Error('请提供检测oss上传结果接口地址')
     }
   }
 
@@ -180,7 +187,11 @@ export default class Record {
     this._worker = this._createWorker();
     this._worker?.postMessage({
       action: 'setOtherData',
-      payload: {h5Version: this._projectInfo}
+      payload: {
+        h5Version: this._projectInfo,
+        checkUrl: this._checkUploadUrl,
+        bizType: this._bizType
+      }
     });
     if (onlyWorker) return;
     getUploadParams(this._preUploadUrl, this._bizType, this._preUploadGet).then((res: OssBaseParams | null) => {
@@ -313,9 +324,24 @@ export default class Record {
    * @param {Function} [params.successCallback=()=>{}] 成功回调函数
    * @param {Function} [params.handleError=()=>{}] 成功回调函数
    */
-  static startWorkerAndSubmit(params: { data: SubmitKeysData[], handleSubmit?: HandleSubmit, successCallback?: () => void, handleError?: HandleError }) {
-    const {data, handleSubmit, successCallback = noop, handleError} = params
+  static startWorkerAndSubmit(params: {
+    data: SubmitKeysData[],
+    handleSubmit?: HandleSubmit,
+    successCallback?: () => void,
+    bizType?: string,
+    checkUploadUrl?: string,
+    handleError?: HandleError
+  }) {
+    const {data, handleSubmit, successCallback = noop, handleError, bizType, checkUploadUrl} = params
     if (!data) return
+    if (!bizType && !this._bizType) {
+      throw new Error('请提供OSS上传bizType')
+    }
+    if (!checkUploadUrl && !this._checkUploadUrl) {
+      throw new Error('请提供检测oss上传结果接口地址')
+    }
+    this._bizType = bizType || this._bizType
+    this._checkUploadUrl = checkUploadUrl || this._checkUploadUrl
     let oldHandleSubmit: HandleSubmit | undefined = undefined
     if (handleSubmit) {
       oldHandleSubmit = this._handleSubmit
@@ -397,7 +423,7 @@ export default class Record {
    * @param {Object} data 提交时额外参数
    * @param {Function} [successCallback=()=>{}] 提交执行完后的回调
    */
-  submitRecord(data: OtherSubmitData = {}, successCallback = noop) {
+  submitRecord(data: OtherSubmitData = {} as OtherSubmitData, successCallback = noop) {
     if (!Record._stopRecord) return
     Record._closeRecord()
     clearTimeout(closeWorkerTimer)

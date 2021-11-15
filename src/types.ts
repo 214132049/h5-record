@@ -16,6 +16,9 @@ export interface OssParam {
 }
 
 export interface OtherSubmitData {
+  bizType: string,
+  h5Version: string,
+  checkUrl: string,
   [key: string]: any
 }
 
@@ -59,6 +62,8 @@ export interface RecordOptions {
   ossPath?: string
   // oss上传参数获取 自定义方法
   preUploadGet?: (() => Promise<OssBaseParams|null>) | undefined
+  // oss上传校验接口
+  checkUploadUrl: string,
   // 是否提交本地储存的录制数据
   isSubmitLocal?: boolean,
   // 错误报告
