@@ -131,8 +131,9 @@ const worker = {
    * @private
    */
   submitOssParams(lastSubmit = false) {
-    const submitPromises = this.ossParams.splice(0, 5).map(v => this.submitOss(v));
+    const submitPromises = this.ossParams.slice(0, 5).map(v => this.submitOss(v));
     Promise.all(submitPromises).then((res) => {
+      this.ossParams.splice(0, 5)
       const failParams = res.filter(Boolean) as OssParam[];
       if (!lastSubmit) {
         this.ossParams = failParams.concat(this.ossParams);
@@ -228,7 +229,6 @@ const worker = {
         fileName: this.ossKeys,
         ...this.otherData
       })
-      this.otherData = {} as OtherSubmitData
     }
     this.submitKeys(keysParam);
   },
@@ -308,7 +308,7 @@ const worker = {
   resetRecord() {
     this.ossParams = [];
     this.ossKeys = [];
-    this.recording = false
+    this.recording = false;
   },
 
   /**
@@ -364,6 +364,7 @@ const worker = {
     const el = ([] as Array<OssParam | string>).concat(this.ossParams, this.ossKeys);
     if (el.length > 0) return;
     this.resetRecord();
+    this.otherData = {} as OtherSubmitData
     self.postMessage({
       action: 'closeWorker'
     })
