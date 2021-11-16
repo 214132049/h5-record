@@ -1,6 +1,6 @@
 {
   "name": "h5-record",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "h5 record sdk",
   "scripts": {
     "build": "rollup --config && npm run build:esm",

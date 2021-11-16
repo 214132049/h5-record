@@ -378,7 +378,11 @@ export default class Record {
       action: 'startRecord',
       payload: data
     });
-    Record._startRecord()
+    if (Record._stopRecord) {
+      this.takeFullSnapshot();
+    } else {
+      Record._startRecord()
+    }
   }
 
   /**
@@ -409,7 +413,6 @@ export default class Record {
    * 重新生成全量快照
    */
   takeFullSnapshot() {
-    if (Record._stopRecord) return
     record.takeFullSnapshot(true)
   }
 
