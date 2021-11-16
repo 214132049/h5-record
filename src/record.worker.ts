@@ -128,9 +128,9 @@ const worker = {
    * @private
    */
   submitOssParams(lastSubmit = false) {
-    const submitPromises = this.ossParams.slice(0, 5).map(v => this.submitOss(v));
+    // TODO: 删除可能存在问题
+    const submitPromises = this.ossParams.splice(0, 5).map(v => this.submitOss(v));
     Promise.all(submitPromises).then((res) => {
-      this.ossParams.splice(0, res.length)
       const failParams = res.filter(Boolean) as OssParam[];
       if (!lastSubmit) {
         this.ossParams = failParams.concat(this.ossParams);
