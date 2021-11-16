@@ -31,7 +31,8 @@ export interface Snapshot {
   events: Array<RecordEvent[]>,
   ossParams: OssParam[],
   ossKeys: string[],
-  otherData: OtherSubmitData
+  otherData: OtherSubmitData,
+  ossBaseParams: OssBaseParams
 }
 
 export type WorkerFnKey = 'submitLocalAndLatest' | 'setOssBaseParams' | 'saveKeys' | 'getSnapshot' | 'resumeSnapshot' | 'collectEvent' | 'startRecord' | 'submitRecord' | 'setOtherData'

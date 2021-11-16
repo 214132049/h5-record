@@ -330,7 +330,8 @@ const worker = {
         events: this.events,
         ossParams: this.ossParams,
         ossKeys: this.ossKeys,
-        otherData: this.otherData
+        otherData: this.otherData,
+        ossBaseParams: this.ossBaseParams
       }
     });
   },
@@ -339,12 +340,13 @@ const worker = {
    * 恢复录制 获取暂停前的录制内容
    */
   resumeSnapshot(payload: Snapshot) {
-    const {events, ossParams, ossKeys, otherData} = payload || {};
+    const {events, ossParams, ossKeys, otherData, ossBaseParams} = payload || {};
     this.recording = true
     this.events = events
     this.ossParams = ossParams
     this.ossKeys = ossKeys
     this.otherData = otherData
+    this.ossBaseParams = ossBaseParams
   },
 
   /**
