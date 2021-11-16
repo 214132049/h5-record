@@ -81,6 +81,7 @@ export default class Record {
       return
     }
     this._stopRecord = null;
+    this._worker = null;
     this._bizType = bizType;
     this._ossPath = ossPath;
     this._preUploadUrl = preUploadUrl;
@@ -128,9 +129,10 @@ export default class Record {
    * 创建worker
    * @private
    */
-  private static _createWorker(): Worker {
+  private static _createWorker(): Worker | null {
     if (!window.Worker) {
-      new Error('你的当前运行环境不支持web worker')
+      new Error('你的当前运行环境不支持web worker');
+      return null;
     }
     const worker: Worker = new RecordWorker();
     worker.onmessageerror = (e: MessageEvent) => {
@@ -148,15 +150,14 @@ export default class Record {
   private static _workerMessageHandler(e: MessageEvent) {
     const {action, payload} = e.data;
     const fnMap: WorkerCallback = {
-      submitKey: (payload: SubmitKeysData[]) => {
-        const keyPromise = payload.map(v => this._submitKeyServer(v))
-        Promise.all(keyPromise).then(res => {
-          const failParams = res.filter(Boolean)
-          this._worker?.postMessage({
-            action: 'saveKeys',
-            payload: failParams
-          });
-        })
+      submitKey: async (payload: SubmitKeysData[]) => {
+        const keyPromise = payload.map(v => this._submitKeyServer(v));
+        const res = await Promise.all(keyPromise);
+        const failParams = res.filter(Boolean);
+        this._worker && this._worker.postMessage({
+          action: 'saveKeys',
+          payload: failParams
+        });
       },
       postSnapshot: (payload: Snapshot) => {
         this._snapshot = payload;
@@ -188,7 +189,7 @@ export default class Record {
       return
     }
     this._worker = this._createWorker();
-    this._worker?.postMessage({
+    this._worker && this._worker.postMessage({
       action: 'setOtherData',
       payload: {
         h5Version: this._projectInfo,
@@ -202,7 +203,7 @@ export default class Record {
       if (this._ossPath) {
         res.ossPath = this._ossPath
       }
-      this._worker?.postMessage({
+      this._worker && this._worker.postMessage({
         action: 'setOssBaseParams',
         payload: res
       });
@@ -214,7 +215,7 @@ export default class Record {
    * @private
    */
   private static _closeWorker() {
-    this._worker?.terminate()
+    this._worker && this._worker.terminate()
     this._worker = null
   }
 
@@ -227,7 +228,7 @@ export default class Record {
   private static _suspendWorker(time: number = 0) {
     clearTimeout(closeWorkerTimer);
     closeWorkerTimer = setTimeout(() => {
-      this._worker?.postMessage({
+      this._worker && this._worker.postMessage({
         action: 'getSnapshot'
       });
     }, time * 1000);
@@ -240,7 +241,7 @@ export default class Record {
   private static _resumeWorker() {
     this._initWorker();
     if (this._snapshot) {
-      this._worker?.postMessage({
+      this._worker && this._worker.postMessage({
         action: 'resumeSnapshot',
         payload: this._snapshot
       });
@@ -273,7 +274,7 @@ export default class Record {
   private static _collectEvent(event: any, isCheckout?: boolean) {
     this._suspendWorker(5);
     this._resumeWorker();
-    this._worker?.postMessage({
+    this._worker && this._worker.postMessage({
       action: 'collectEvent',
       payload: {
         event,
@@ -311,7 +312,7 @@ export default class Record {
    */
   private static _initSubmit(data: SubmitKeysData[] = []) {
     this._initWorker(data.length > 0)
-    this._worker?.postMessage({
+    this._worker && this._worker.postMessage({
       action: 'submitLocalAndLatest',
       payload: {
         data
