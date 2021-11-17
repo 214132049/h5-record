@@ -41,6 +41,9 @@ const LOG_KEY = 'log_events';
 const OSS_EVENTS = 'oss_events';
 const OSS_KEYS = 'oss_keys';
 
+// 最后提交时调用次数 为0时关闭worker 保证所有提交都处理完成
+let submitCount = 0;
+
 const worker = {
   ossBaseParams: {} as OssBaseParams,
   recording: false,
@@ -60,6 +63,9 @@ const worker = {
    * @private
    */
   getOssData() {
+    if (!this.ossBaseParams.ossPath) {
+      return;
+    }
     const lastEvents = this.getLastEvents();
     const submitEvents = lastEvents.splice(0, submitThrottle);
     const ossFile = deflate(JSON.stringify(submitEvents), {level: 6}).toString();
@@ -128,7 +134,9 @@ const worker = {
    * @private
    */
   submitOssParams(lastSubmit = false) {
-    // TODO: 删除可能存在问题
+    if (lastSubmit) {
+      submitCount += 1
+    }
     const submitPromises = this.ossParams.splice(0, 5).map(v => this.submitOss(v));
     Promise.all(submitPromises).then((res) => {
       const failParams = res.filter(Boolean) as OssParam[];
@@ -136,11 +144,15 @@ const worker = {
         this.ossParams = failParams.concat(this.ossParams);
         return;
       }
+      submitCount -= 1
       // 用户提交订单后  失败的提交全部保存到本地
       this.addLocalData(OSS_EVENTS, failParams, true);
       if (this.ossParams.length > 0) {
         // 提交剩下的录制
         this.submitOssParams(lastSubmit);
+        return;
+      }
+      if (submitCount > 0) {
         return;
       }
       this.closeWorker();

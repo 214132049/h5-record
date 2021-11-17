@@ -197,11 +197,22 @@ export default class Record {
         bizType: this._bizType
       }
     });
+    if (this._ossPath) {
+      this._worker && this._worker.postMessage({
+        action: 'setOssBaseParams',
+        payload: {
+          ossPath: this._ossPath
+        }
+      });
+    }
     if (onlyWorker) return;
     getUploadParams(this._preUploadUrl, this._bizType, this._preUploadGet).then((res: OssBaseParams | null) => {
       if (!res) return
       if (this._ossPath) {
         res.ossPath = this._ossPath
+      } else {
+        // 没有设置ossPath时
+        this._ossPath = res.ossPath
       }
       this._worker && this._worker.postMessage({
         action: 'setOssBaseParams',
