@@ -311,7 +311,7 @@ export default class Record {
       return result.then(() => false).catch(() => data)
     } catch (e) {
       console.error('[oss Key提交失败]:', (e as Error).message)
-      this._reportError(e as Error)
+      this._reportError((e as Error).message)
       return Promise.resolve(data)
     }
   }

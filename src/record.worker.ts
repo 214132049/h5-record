@@ -370,7 +370,7 @@ const worker = {
     }
     // 因为是分开提交 判断都提交完后再关闭
     const el = ([] as Array<OssParam | string>).concat(this.ossParams, this.ossKeys);
-    if (el.length > 0) return;
+    if (el.length > 0 || submitCount > 0) return;
     this.resetRecord();
     this.otherData = {} as OtherSubmitData
     self.postMessage({

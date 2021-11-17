@@ -42,12 +42,12 @@ export interface WorkerCallback {
   postSnapshot: (payload: Snapshot) => void,
   closeWorker: () => void,
   logger: (val: any) => void,
-  reportError: (err: Error | MessageEvent) => void
+  reportError: (val: any) => void
 }
 
 export type HandleSubmit = (data: SubmitKeysData) => Promise<void>
 
-export type HandleError = (err: MessageEvent | Error) => void
+export type HandleError = (message: any) => void
 
 export interface RecordOptions {
   // 项目名
