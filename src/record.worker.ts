@@ -57,7 +57,7 @@ const worker = {
   getLastEvents() {
     return this.events[this.events.length - 1];
   },
-
+  
   /**
    * 获取提交oss参数
    * @private
@@ -69,7 +69,7 @@ const worker = {
     const lastEvents = this.getLastEvents();
     const submitEvents = lastEvents.splice(0, submitThrottle);
     const ossFile = deflate(JSON.stringify(submitEvents), {level: 6}).toString();
-    const fileName = this.otherData.h5Version + '$$'+ getUUID()
+    const fileName = this.otherData.h5Version + '$$' + getUUID()
     const key = this.ossBaseParams.ossPath + fileName
     const params: OssParam = {key, file: ossFile}
     this.ossKeys.push(fileName)
@@ -79,7 +79,7 @@ const worker = {
       this.getOssData()
     }
   },
-
+  
   /**
    * 数据提交到阿里云
    * 提交失败返回包含提交参数的promise
@@ -101,6 +101,7 @@ const worker = {
       formData.append(key, _params[key]);
     }
     try {
+      this.logger({message: '[Start upload]', data: params.key});
       const res = await fetch(uploadHost, {
         method: 'POST',
         body: formData
@@ -112,22 +113,17 @@ const worker = {
         bizType: this.otherData.bizType,
         keyList: [params.key]
       })
+      this.logger({message: '[Check Result]', data: checkRes.content});
       if (checkRes.result !== 1 || checkRes.content.length === 0) {
         throw new Error('文件校验失败')
       }
       return false;
     } catch (e) {
-      self.postMessage({
-        action: 'reportError',
-        payload: JSON.stringify({
-          message: (e as ErrorEvent).message,
-          data: params
-        })
-      })
+      this.logger({message: (e as ErrorEvent).message, data: params});
       return params;
     }
   },
-
+  
   /**
    * 提交业务需要的录制快照
    * @param lastSubmit 标记用户提交了订单
@@ -155,10 +151,11 @@ const worker = {
       if (submitCount > 0) {
         return;
       }
+      this.logger('[Close Worker submitOssParams]');
       this.closeWorker();
     });
   },
-
+  
   /**
    * 提交文件上传oss文件key
    * @param data 要提交的内容
@@ -173,7 +170,7 @@ const worker = {
       payload: data
     })
   },
-
+  
   /**
    * key提交失败保存到本地
    */
@@ -183,9 +180,10 @@ const worker = {
     }
     // fix: 在提交请求执行后再清空 修复在提交keys的时候worker已关闭
     this.ossKeys = [];
+    this.logger('[Close Worker saveKeys]');
     this.closeWorker();
   },
-
+  
   /**
    * 添加数据到本地
    * @param key 储存的key
@@ -206,7 +204,7 @@ const worker = {
       this.addLocalData(key, value, savaPrv);
     }
   },
-
+  
   /**
    * 保存最大日志事件数到本地  5秒钟保存一次
    * @private
@@ -215,11 +213,11 @@ const worker = {
     const allEvents = this.events.flat().slice(0 - maxLength);
     this.addLocalData(LOG_KEY, allEvents);
   },
-
+  
   /**
    * 提交本地保存的数据和最新产生的数据
    */
-  async submitLocalAndLatest(params: {lastSubmit?: boolean, data?: SubmitKeysData[]}) {
+  async submitLocalAndLatest(params: { lastSubmit?: boolean, data?: SubmitKeysData[] }) {
     const {lastSubmit = false, data = []} = params
     const ossParams = await this.getLocalOssParams() || []
     let keysParam = await this.getLocalOssKeys() || []
@@ -241,21 +239,21 @@ const worker = {
     }
     this.submitKeys(keysParam);
   },
-
+  
   /**
    * 获取本地oss params
    */
   async getLocalOssParams() {
     return this.getLocalData<OssParam>(OSS_EVENTS)
   },
-
+  
   /**
    * 获取本地oss keys
    */
   async getLocalOssKeys() {
     return this.getLocalData<SubmitKeysData>(OSS_KEYS)
   },
-
+  
   /**
    * 获取本地数据
    */
@@ -265,7 +263,7 @@ const worker = {
     await localforage.removeItem(name)
     return data
   },
-
+  
   /**
    * 收集快照
    * @param data
@@ -287,7 +285,7 @@ const worker = {
     //   this.localEvents()
     // }, 5000);
   },
-
+  
   /**
    * 开始记录投保操作
    * 新开一个数组 重新生成全量快照
@@ -297,7 +295,7 @@ const worker = {
     this.setOtherData(payload)
     this.recording = true
   },
-
+  
   /**
    * 用户本次投保结束 提交数据
    */
@@ -305,9 +303,9 @@ const worker = {
     this.recording = false
     this.setOtherData(payload)
     this.getOssData()
-    this.submitLocalAndLatest({ lastSubmit: true })
+    this.submitLocalAndLatest({lastSubmit: true})
   },
-
+  
   /**
    * 重置录制
    */
@@ -316,14 +314,14 @@ const worker = {
     this.ossKeys = [];
     this.recording = false;
   },
-
+  
   /**
    * 设置oss提交参数
    */
   setOssBaseParams(payload: OssBaseParams) {
     this.ossBaseParams = payload;
   },
-
+  
   /**
    * 设置业务其他参数
    */
@@ -331,7 +329,7 @@ const worker = {
     const data = isPlainObject(payload) ? payload : {}
     this.otherData = {...this.otherData, ...data}
   },
-
+  
   /**
    * 暂停录制 获取当前录制内容
    */
@@ -347,7 +345,7 @@ const worker = {
       }
     });
   },
-
+  
   /**
    * 恢复录制 获取暂停前的录制内容
    */
@@ -360,7 +358,7 @@ const worker = {
     this.otherData = otherData
     this.ossBaseParams = ossBaseParams
   },
-
+  
   /**
    * 关闭web worker
    */
@@ -370,6 +368,10 @@ const worker = {
     }
     // 因为是分开提交 判断都提交完后再关闭
     const el = ([] as Array<OssParam | string>).concat(this.ossParams, this.ossKeys);
+    this.logger({
+      message: '[Close Worker]',
+      data: this.ossParams.length + '-' + this.ossKeys.length + '-' + submitCount
+    });
     if (el.length > 0 || submitCount > 0) return;
     this.resetRecord();
     this.otherData = {} as OtherSubmitData
@@ -378,11 +380,15 @@ const worker = {
     })
   },
   
-  logger(data: any) {
-    self.postMessage({
-      action: 'logger',
-      payload: data
-    })
+  logger(message: string | { message: string, data: any }) {
+    let payload = typeof message === 'string' ? {message} : message
+    try {
+      self.postMessage({
+        action: 'reportError',
+        payload: JSON.stringify(payload)
+      })
+    } finally {
+    }
   }
 }
 
@@ -393,7 +399,7 @@ self.onmessage = function (e) {
   } catch (e) {
     self.postMessage({
       action: 'reportError',
-      payload: e
+      payload: (e as ErrorEvent).message
     })
   }
 };

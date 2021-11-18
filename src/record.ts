@@ -46,7 +46,7 @@ export default class Record {
   private static _reportError: HandleError = noop
   // oss key提交后的回调
   private static _successCallback: () => any
-
+  
   constructor(options: RecordOptions) {
     if (Record._instance) {
       return Record._instance;
@@ -54,7 +54,7 @@ export default class Record {
     Record._init(options)
     Record._instance = this;
   }
-
+  
   /**
    * 初始化参数
    * @param {Object} options 配置参数
@@ -104,7 +104,7 @@ export default class Record {
       this._initSubmit()
     }
   }
-
+  
   /**
    * 检查初始化参数
    * @param {Object} options  初始化参数
@@ -124,7 +124,7 @@ export default class Record {
       throw new Error('请提供检测oss上传结果接口地址')
     }
   }
-
+  
   /**
    * 创建worker
    * @private
@@ -141,7 +141,7 @@ export default class Record {
     worker.onmessage = this._workerMessageHandler.bind(this);
     return worker
   }
-
+  
   /**
    * worker onmessage函数
    * @param {MessageEvent} e postMessage事件
@@ -171,14 +171,11 @@ export default class Record {
         } catch (e) {
         }
       },
-      logger: (payload: any) => {
-        console.log(payload)
-      },
       reportError: this._reportError
     };
     fnMap[action as keyof WorkerCallback](payload);
   }
-
+  
   /**
    * 初始化web worker
    * @param {boolean} [onlyWorker=false] 是否仅创建worker
@@ -220,7 +217,7 @@ export default class Record {
       });
     })
   }
-
+  
   /**
    * 关闭web worker
    * @private
@@ -229,7 +226,7 @@ export default class Record {
     this._worker && this._worker.terminate()
     this._worker = null
   }
-
+  
   /**
    * 检测用户是否有操作
    * 一定时间内没有操作 暂时关闭web worker 释放内存
@@ -244,7 +241,7 @@ export default class Record {
       });
     }, time * 1000);
   }
-
+  
   /**
    * 重启web worker 并向新worker传递暂停之前的内容
    * @private
@@ -259,7 +256,7 @@ export default class Record {
       this._snapshot = null;
     }
   }
-
+  
   /**
    * 开始录制
    * @private
@@ -267,7 +264,7 @@ export default class Record {
   private static _startRecord() {
     this._stopRecord = record(this._recordOptions);
   }
-
+  
   /**
    * 关闭录制
    * @private
@@ -276,7 +273,7 @@ export default class Record {
     this._stopRecord && this._stopRecord()
     this._stopRecord = null
   }
-
+  
   /**
    * 收集快照
    * @param {Object} event 快照
@@ -293,7 +290,7 @@ export default class Record {
       }
     });
   }
-
+  
   /**
    * 提交oss key
    * @param {SubmitKeysData} data 录制数据
@@ -315,7 +312,7 @@ export default class Record {
       return Promise.resolve(data)
     }
   }
-
+  
   /**
    * 不需要录制时 初始化提交
    * @param {Array<SubmitKeysData>} data 录制数据
@@ -330,7 +327,7 @@ export default class Record {
       }
     });
   }
-
+  
   /**
    * 不录制只提交数据
    * @param {Object} params 函数参数
@@ -379,14 +376,14 @@ export default class Record {
     }
     this._initSubmit(_data as SubmitKeysData[])
   }
-
+  
   /**
    * 开始记录操作
    * @param {Object} data 开始录制时 设置额外提交参数
    */
   startRecord(data?: OtherSubmitData) {
     Record._initWorker();
-    Record._worker?.postMessage({
+    Record._worker && Record._worker.postMessage({
       action: 'startRecord',
       payload: data
     });
@@ -396,7 +393,7 @@ export default class Record {
       Record._startRecord()
     }
   }
-
+  
   /**
    * 关闭录制
    */
@@ -404,7 +401,7 @@ export default class Record {
     Record._closeRecord()
     Record._closeWorker();
   }
-
+  
   /**
    * 继续录制
    */
@@ -412,7 +409,7 @@ export default class Record {
     Record._resumeWorker();
     Record._startRecord()
   }
-
+  
   /**
    * 暂停录制
    */
@@ -420,14 +417,14 @@ export default class Record {
     Record._closeRecord()
     Record._suspendWorker()
   }
-
+  
   /**
    * 重新生成全量快照
    */
   takeFullSnapshot() {
     record.takeFullSnapshot(true)
   }
-
+  
   /**
    * 设置上传方法 初始化没有提供oss key上传,可以通过此方法设置
    * @param action 录制数据提交函数
@@ -435,21 +432,24 @@ export default class Record {
   setHandleSubmit(action: HandleSubmit) {
     Record._handleSubmit = action
   }
-
+  
   /**
    * 用户本次投保结束 提交数据
    * @param {Object} data 提交时额外参数
    * @param {Function} [successCallback=()=>{}] 提交执行完后的回调
    */
   submitRecord(data: OtherSubmitData = {} as OtherSubmitData, successCallback = noop) {
-    if (!Record._stopRecord) return
+    if (!Record._stopRecord) {
+      typeof successCallback === "function" && successCallback()
+      return
+    }
     Record._closeRecord()
     clearTimeout(closeWorkerTimer)
     Record._resumeWorker()
     if (typeof successCallback === "function") {
       Record._successCallback = successCallback
     }
-    Record._worker?.postMessage({
+    Record._worker && Record._worker.postMessage({
       action: 'submitRecord',
       payload: data
     });
