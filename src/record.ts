@@ -388,8 +388,10 @@ export default class Record {
       payload: data
     });
     if (Record._stopRecord) {
+      Record._reportError("重新获取全量快照")
       this.takeFullSnapshot();
     } else {
+      Record._reportError("开始录制")
       Record._startRecord()
     }
   }
@@ -449,6 +451,7 @@ export default class Record {
     if (typeof successCallback === "function") {
       Record._successCallback = successCallback
     }
+    Record._reportError("提交录制")
     Record._worker && Record._worker.postMessage({
       action: 'submitRecord',
       payload: data

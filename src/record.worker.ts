@@ -199,6 +199,7 @@ const worker = {
       }
       const oldVal = await localforage.getItem(key)
       const newVal = ((oldVal || []) as Array<OssParam | SubmitKeysData | RecordEvent | unknown>).concat(value)
+      this.logger({message: '[addLocalData]' + key, data: newVal});
       await localforage.setItem(key, newVal)
     } catch (e) {
       this.addLocalData(key, value, savaPrv);
