@@ -1,6 +1,6 @@
 # H5-Record
 
-基于 [rrweb@0.9.14](https://github.com/rrweb-io/rrweb) 和WebWorker开发的H5页面录制SDK
+基于 [rrweb@1.0.0-beta.0](https://github.com/rrweb-io/rrweb) 和WebWorker开发的H5页面录制SDK
 
 ### 使用方式：
 

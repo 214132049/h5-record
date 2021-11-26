@@ -382,18 +382,20 @@ export default class Record {
    * @param {Object} data 开始录制时 设置额外提交参数
    */
   startRecord(data?: OtherSubmitData) {
-    Record._initWorker();
-    Record._worker && Record._worker.postMessage({
-      action: 'startRecord',
-      payload: data
-    });
-    if (Record._stopRecord) {
-      Record._reportError("重新获取全量快照")
-      this.takeFullSnapshot();
-    } else {
-      Record._reportError("开始录制")
-      Record._startRecord()
-    }
+    setTimeout(() => {
+      Record._initWorker();
+      Record._worker && Record._worker.postMessage({
+        action: 'startRecord',
+        payload: data
+      });
+      if (Record._stopRecord) {
+        Record._reportError("重新获取全量快照")
+        this.takeFullSnapshot();
+      } else {
+        Record._reportError("开始录制")
+        Record._startRecord()
+      }
+    }, 0)
   }
   
   /**
