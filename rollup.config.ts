@@ -1,6 +1,7 @@
 import typescript from "@rollup/plugin-typescript";
 import nodeResolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
+import {babel} from '@rollup/plugin-babel';
 import {terser} from "rollup-plugin-terser";
 import copy from 'rollup-plugin-copy'
 // @ts-ignore
@@ -23,6 +24,19 @@ export default {
     workerLoader({
       targetPlatform: 'browser',
       extensions: ['.ts'],
+      plugins: [
+        babel({
+          presets: ['@babel/preset-env'],
+          extensions: ['.mjs'],
+          babelHelpers: 'bundled',
+          include: 'node_modules/pako/dist/pako.esm.mjs'
+        }),
+        terser({
+          output: {
+            comments: false,
+          }
+        })
+      ],
       // preserveSource: true
     }),
     typescript(),

@@ -1,3 +1,4 @@
+import 'whatwg-fetch'
 import {encode} from 'base-64';
 import HmacSHA1 from 'crypto-js/hmac-sha1';
 import encBase64 from 'crypto-js/enc-base64';

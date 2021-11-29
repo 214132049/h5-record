@@ -1,7 +1,7 @@
 import 'formdata-polyfill'
+import 'whatwg-fetch'
 import localforage from "localforage";
-// @ts-ignore
-import {deflate} from "pako/lib/deflate.js";
+import {deflate} from "pako";
 import {
   OssBaseParams,
   OssParam,
